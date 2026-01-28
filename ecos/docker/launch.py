@@ -184,7 +184,7 @@ class ECOS_vm(vrnetlab.VM):
 
             # Set portal hostname if provided
             if portal_hostname:
-                send_cmd(f'orchestrator address {portal_hostname}', 2)
+                send_cmd(f'portal hostname {portal_hostname}', 2)
 
             # Register with cloud portal if credentials provided
             if registration_key and account_name:
