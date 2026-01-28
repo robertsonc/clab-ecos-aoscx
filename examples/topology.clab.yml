@@ -27,17 +27,45 @@ topology:
     #
     internet:
       kind: linux
+      image: ghcr.io/srl-labs/network-multitool
       mgmt-ipv4: 172.30.30.10
+      binds:
+        - ../configs/internet-dnsmasq.conf:/etc/dnsmasq.conf:ro
       exec:
-        # Enable IP forwarding to act as a router/switch
         - sysctl -w net.ipv4.ip_forward=1
+        - ip addr add 192.168.100.1/24 dev eth1
+        - ip addr add 192.168.101.1/24 dev eth2
+        - ip addr add 192.168.102.1/24 dev eth3
+        - iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+        - iptables -A FORWARD -i eth0 -o eth1 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth0 -o eth2 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth0 -o eth3 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth2 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth3 -o eth0 -j ACCEPT
+        - apk add --no-cache dnsmasq
+        - dnsmasq
 
     mpls:
       kind: linux
+      image: ghcr.io/srl-labs/network-multitool
       mgmt-ipv4: 172.30.30.11
+      binds:
+        - ../configs/mpls-dnsmasq.conf:/etc/dnsmasq.conf:ro
       exec:
         - sysctl -w net.ipv4.ip_forward=1
-
+        - ip addr add 10.100.0.1/24 dev eth1
+        - ip addr add 10.100.1.1/24 dev eth2
+        - ip addr add 10.100.2.1/24 dev eth3
+        - iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+        - iptables -A FORWARD -i eth0 -o eth1 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth0 -o eth2 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth0 -o eth3 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth2 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth3 -o eth0 -j ACCEPT
+        - apk add --no-cache dnsmasq
+        - dnsmasq
     #
     # === Dallas Site (DFW) ===
     #
