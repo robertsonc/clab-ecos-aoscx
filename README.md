@@ -4,7 +4,7 @@ Run HPE Aruba EdgeConnect SD-WAN and AOS-CX switches together in ContainerLab fo
 
 ## What's This?
 
-This repo provides everything needed to run a complete SD-WAN lab with:
+This repo provides everything needed to run a complete EdgeConnect SD-WAN lab with:
 - **EdgeConnect Virtual (EC-V)** - SD-WAN appliances
 - **AOS-CX Virtual (vCX)** - Data center switches
 - **Linux transport nodes** - Simulating internet and MPLS networks
@@ -18,17 +18,17 @@ Built on [vrnetlab](https://github.com/srl-labs/vrnetlab) for packaging VMs in c
 **Connections:**
 - All EC-V `wan0` interfaces connect to **internet** (Linux node)
 - All EC-V `wan1` interfaces connect to **mpls** (Linux node)
-- DFW-ECV-01 `lan0` ↔ DFW-vCX-01 `Eth1/3`
+- DFW-ECV-01 `lan0` ↔ DFW-vCX-01 `1/1/1`
 - STL-ECV-01 `lan0` ↔ STL-vCX-01 `1/1/1`
 - CHI-ECV-01 `lan0` ↔ CHI-vCX-01 `1/1/1`
 
 ### Current State
 
 > **Note:** This project deploys the containers and performs basic bootstrapping (hostname, admin credentials, SSH/HTTPS enablement). All EdgeConnect and AOS-CX configuration beyond bootstrapping must be done manually:
-> - **EdgeConnect**: Configure via Aruba Orchestrator or local Web UI
-> - **AOS-CX**: Configure via SSH or REST API
+> - **EdgeConnect**: Configure via Orchestrator or local Web UI
+> - **AOS-CX**: Configure via SSH or REST-API
 >
-> Future iterations will include cloud-init support and built-in startup configurations to have the lab fully operational out of the box.
+> Future iterations will include cloud-init support for EC-V and built-in AOS-CX startup configurations to have the lab fully operational out of the box. I may also provide a YAML preconfiguration for one of the EC-Vs to support automated provisioing via Orchestrator. 
 
 ## Prerequisites
 
@@ -49,7 +49,7 @@ Built on [vrnetlab](https://github.com/srl-labs/vrnetlab) for packaging VMs in c
 3. **ContainerLab** - Network topology orchestration
 4. **vrnetlab** - Framework for packaging VMs into container images
 
-### Required Images (Obtain from HPE/Aruba)
+### Required Images (Note: Obtain these from HPE/Aruba)
 
 1. **EdgeConnect EC-V qcow2** - e.g., `ECV-9.6.1.0_106887.qcow2`
 2. **AOS-CX vmdk** - e.g., `arubaoscx-disk-image-genericx86-p4-20250822141147.vmdk`
@@ -75,16 +75,14 @@ sudo modprobe kvm_intel  # or kvm_amd
 ```bash
 curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker $USER
-# Log out and back in
+# Note: Log out and back in
 ```
 
 ### Step 3: Install ContainerLab
 
 ```bash
-# Quick install
+# Quick install script
 bash -c "$(curl -sL https://get.containerlab.dev)"
-
-# Verify
 clab version
 ```
 
@@ -93,7 +91,6 @@ clab version
 vrnetlab is the framework that packages VMs into container images. You need to clone it and add our custom node types.
 
 ```bash
-# Clone vrnetlab repository
 git clone https://github.com/srl-labs/vrnetlab.git
 cd vrnetlab
 ```
@@ -108,8 +105,8 @@ Copy the ECOS docker components from this repository into vrnetlab:
 # From the vrnetlab directory, create the aruba/ecos folder and copy files
 # Adjust the path to where you cloned this repo
 mkdir -p aruba/ecos/docker
-cp /path/to/clab-ecos-aoscx-evpn/ecos/Makefile ./aruba/ecos/
-cp /path/to/clab-ecos-aoscx-evpn/ecos/docker/* ./aruba/ecos/docker/
+cp /path/to/clab-ecos-aoscx/ecos/Makefile ./aruba/ecos/
+cp /path/to/clab-ecos-aoscx/ecos/docker/* ./aruba/ecos/docker/
 ```
 
 After copying, your vrnetlab directory should contain:
@@ -135,7 +132,7 @@ vrnetlab/
 Place your vendor images (obtained from HPE) into the respective vrnetlab folders:
 
 ```bash
-# Copy EdgeConnect image to the aruba/ecos folder
+# Copy EdgeConnect qcow2 image to the aruba/ecos folder
 cp /path/to/ECV-9.6.1.0_106887.qcow2 ./aruba/ecos/
 
 # Copy AOS-CX image to the existing aoscx folder
@@ -172,7 +169,7 @@ docker images | grep aruba
 Once you've built the Docker images (Steps 4-7), return to this repository directory to deploy the lab.
 
 ```bash
-cd /path/to/clab-ecos-aoscx-evpn
+cd /path/to/clab-ecos-aoscx
 ```
 
 ### 1. Configure Credentials
@@ -214,8 +211,8 @@ EC-V boots in ~60-90 seconds, AOS-CX takes ~2-3 minutes:
 watch docker ps
 
 # Check specific node logs
-docker logs -f clab-ecos-aoscx-evpn-DFW-ECV-01
-docker logs -f clab-ecos-aoscx-evpn-DFW-vCX-01
+docker logs -f clab-ecos-aoscx-DFW-ECV-01
+docker logs -f clab-ecos-aoscx-DFW-vCX-01
 ```
 
 ### 5. Access Your Devices
@@ -228,8 +225,8 @@ docker logs -f clab-ecos-aoscx-evpn-DFW-vCX-01
 | DFW-vCX-01 | AOS-CX | https://172.30.30.31 | ssh admin@172.30.30.31 |
 | STL-vCX-01 | AOS-CX | https://172.30.30.32 | ssh admin@172.30.30.32 |
 | CHI-vCX-01 | AOS-CX | https://172.30.30.33 | ssh admin@172.30.30.33 |
-| INTERNET | Linux | N/A | docker exec -it clab-ecos-aoscx-evpn-internet bash |
-| MPLS | Linux | N/A | docker exec -it clab-ecos-aoscx-evpn-mpls bash |
+| INTERNET | Linux | N/A | docker exec -it clab-ecos-aoscx-internet bash |
+| MPLS | Linux | N/A | docker exec -it clab-ecos-aoscx-mpls bash |
 
 Default credentials: `admin` / `admin`
 
