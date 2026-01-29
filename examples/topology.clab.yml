@@ -1,4 +1,4 @@
-# ECOS + AOS-CX EVPN Lab Topology
+# ECOS + AOS-CX Lab Topology
 #
 # This topology creates a 3-site SD-WAN lab with:
 # - 3 EdgeConnect EC-V appliances (DFW, STL, CHI)
@@ -10,7 +10,7 @@
 #   STL (St. Louis, MO) - STL-ECV-01 + STL-vCX-01
 #   CHI (Chicago, IL)   - CHI-ECV-01 + CHI-vCX-01
 
-name: ecos-aoscx-evpn
+name: ecos-aoscx
 
 mgmt:
   network: clab-mgmt
@@ -131,10 +131,10 @@ topology:
 
   links:
     #
-    # === LAN Links (EC-V lan0 <-> AOS-CX) ===
+    # === LAN Links (EC-V lan0 <-> AOS-CX 1/1/1) ===
     #
-    # Dallas: DFW-ECV-01:lan0 (eth2) <-> DFW-vCX-01:Eth1/3 (eth3)
-    - endpoints: ["DFW-ECV-01:eth2", "DFW-vCX-01:eth3"]
+    # Dallas: DFW-ECV-01:lan0 (eth2) <-> DFW-vCX-01:1/1/1 (eth1)
+    - endpoints: ["DFW-ECV-01:eth2", "DFW-vCX-01:eth1"]
 
     # St. Louis: STL-ECV-01:lan0 (eth2) <-> STL-vCX-01:1/1/1 (eth1)
     - endpoints: ["STL-ECV-01:eth2", "STL-vCX-01:eth1"]

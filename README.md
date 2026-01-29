@@ -28,7 +28,7 @@ Built on [vrnetlab](https://github.com/srl-labs/vrnetlab) for packaging VMs in c
 > - **EdgeConnect**: Configure via Orchestrator or local Web UI
 > - **AOS-CX**: Configure via SSH or REST-API
 >
-> Future iterations will include cloud-init support for EC-V and built-in AOS-CX startup configurations to have the lab fully operational out of the box. I may also provide a YAML preconfiguration for one of the EC-Vs to support automated provisioing via Orchestrator. 
+> Future iterations will include cloud-init support for EC-V and built-in AOS-CX startup configurations to have the lab fully operational out of the box. I may also provide a YAML preconfiguration for one of the EC-Vs to support automated provisioning via Orchestrator. 
 
 ## Prerequisites
 
@@ -310,7 +310,7 @@ AOS-CX requires 8GB RAM per instance. Check available memory and container resou
 ```bash
 free -h
 docker stats --no-stream
-docker logs clab-ecos-aoscx-evpn-DFW-vCX-01
+docker logs clab-ecos-aoscx-DFW-vCX-01
 ```
 
 If running on a VM, ensure you have at least 40GB RAM for the full topology.
@@ -329,7 +329,7 @@ sudo usermod -aG kvm $USER
 docker ps --format "table {{.Names}}\t{{.Status}}"
 
 # Detailed health check
-docker inspect --format='{{.State.Health.Status}}' clab-ecos-aoscx-evpn-DFW-ECV-01
+docker inspect --format='{{.State.Health.Status}}' clab-ecos-aoscx-DFW-ECV-01
 ```
 
 ### Clean Restart
@@ -344,12 +344,20 @@ sudo -E clab deploy -t examples/topology.clab.yml
 ## Directory Structure
 
 ```
-clab-ecos-aoscx-evpn/
+clab-ecos-aoscx/
 ├── README.md
 ├── env.example
 ├── .gitignore
+├── topology.png
+├── configs/              # Device startup configurations
+│   ├── CHI-vCX-01.cfg
+│   ├── DFW-vCX-01.cfg
+│   ├── STL-vCX-01.cfg
+│   ├── internet-dnsmasq.conf
+│   └── mpls-dnsmasq.conf
 ├── ecos/                 # Copy to vrnetlab/aruba/ecos/
 │   ├── Makefile
+│   ├── README.md
 │   └── docker/
 │       ├── Dockerfile
 │       └── launch.py
@@ -376,6 +384,17 @@ vrnetlab/
 │       └── ECV-*.qcow2   # Your vendor image (from HPE)
 └── ... (other vrnetlab node types)
 ```
+
+## Security Considerations
+
+This lab is designed for **isolated testing and development environments only**. Review these considerations before deployment:
+
+- **Default Credentials**: Devices use `admin`/`admin` by default. Change passwords via environment variables (`ECOS_ADMIN_PASSWORD`, `AOSCX_ADMIN_PASSWORD`) before deployment
+- **Credential Storage**: The `.env` file contains sensitive credentials. Ensure it is never committed to version control (included in `.gitignore`)
+- **Environment Variables**: Credentials passed via environment variables may be visible in process listings. Use appropriate access controls on the host system
+- **Network Isolation**: The management network (172.30.30.0/24) should not be exposed to untrusted networks
+- **Console Access**: Initial device configuration is applied via console (telnet to QEMU). This occurs within the container and is not exposed externally
+- **Lab Environment Only**: This topology is intended for lab, testing, and educational purposes. Do not use default configurations in production environments
 
 ## Useful Resources
 
