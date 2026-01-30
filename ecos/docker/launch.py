@@ -59,6 +59,7 @@ class ECOS_vm(vrnetlab.VM):
         self.num_nics = 6  # mgmt0, wan0, lan0, wan1, lan1, ha (typical EC-V config)
         self.nic_type = "virtio-net-pci"
         self.initial_config_applied = False
+        self.reboot_pending = False
 
     def bootstrap_spin(self):
         """Monitor boot progress and wait for system ready"""
@@ -88,7 +89,10 @@ class ECOS_vm(vrnetlab.VM):
         if ridx == 0:
             # Appliance Manager is ready with IP
             self.logger.info("EdgeConnect Appliance Manager is accessible")
-            self.running = True
+            if not self.initial_config_applied:
+                self._apply_initial_config()
+            else:
+                self.running = True
             return
 
         if ridx == 1:
@@ -99,8 +103,10 @@ class ECOS_vm(vrnetlab.VM):
             # Login prompt - wait for mgmt interface and apply config
             self.logger.info("EdgeConnect login prompt detected")
             self._wait_for_mgmt_ip()
-            self._apply_initial_config()
-            self.running = True
+            if not self.initial_config_applied:
+                self._apply_initial_config()
+            else:
+                self.running = True
             return
 
         if ridx == 3:
@@ -130,9 +136,36 @@ class ECOS_vm(vrnetlab.VM):
         self.logger.warning("Timeout waiting for port 443")
         return False
 
+    def _wait_for_reboot(self):
+        """Wait for system to come back up after reload"""
+        self.logger.info("Waiting for system to reboot...")
+        
+        # First wait for system to go down (connection to drop)
+        time.sleep(10)
+        
+        # Now wait for it to come back up - poll port 22 or 443
+        self.logger.info("Waiting for system to come back online...")
+        for i in range(180):  # Wait up to 3 minutes
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(2)
+                s.connect(('127.0.0.1', 443))
+                s.close()
+                self.logger.info("System is back online (port 443 responsive)")
+                time.sleep(5)  # Give it a few more seconds to stabilize
+                return True
+            except (socket.timeout, socket.error):
+                if i % 10 == 0:
+                    self.logger.info(f"  Still waiting for reboot... ({i}s)")
+                time.sleep(1)
+        
+        self.logger.warning("Timeout waiting for system to come back online")
+        return False
+
     def _apply_initial_config(self):
         """Apply initial configuration via console"""
         if self.initial_config_applied:
+            self.running = True
             return
 
         # Get configuration from environment variables
@@ -141,11 +174,6 @@ class ECOS_vm(vrnetlab.VM):
         account_name = os.getenv("ECOS_ACCOUNT_NAME", "")
         site_tag = os.getenv("ECOS_SITE_TAG", "ContainerLab")
         portal_hostname = os.getenv("ECOS_PORTAL_HOSTNAME", "")
-
-        # Skip config if no credentials provided
-        if not admin_password and not registration_key:
-            self.logger.info("No configuration environment variables set - skipping initial config")
-            return
 
         self.logger.info("Applying initial configuration...")
 
@@ -172,8 +200,13 @@ class ECOS_vm(vrnetlab.VM):
             send_cmd("conf t", 1)
             wait_for_prompt("(config)#", 5)
 
-            # Apply configuration commands
-            self.logger.info(f"Applying configuration for {self.hostname}...")
+            # === MAC ADDRESS MAPPING ===
+            self.logger.info("Applying MAC address mapping...")
+            send_cmd("interface mgmt0 mac address eth0", 2)
+            send_cmd("interface wan0 mac address eth1", 2)
+            send_cmd("interface lan0 mac address eth2", 2)
+            send_cmd("interface wan1 mac address eth3", 2)
+            send_cmd("interface lan1 mac address eth4", 2)
 
             # Set hostname
             send_cmd(f'hostname {self.hostname}', 2)
@@ -201,17 +234,21 @@ class ECOS_vm(vrnetlab.VM):
             self.initial_config_applied = True
             self.logger.info("Initial configuration applied successfully")
 
-            # Read any remaining output
-            time.sleep(1)
-            try:
-                output = self.tn.read_very_eager()
-                if output:
-                    self.logger.debug(f"Console output: {output.decode(errors='replace')[-500:]}")
-            except Exception:
-                pass
+            # Reload to apply MAC mapping
+            self.logger.info("Reloading system to apply MAC mapping...")
+            send_cmd("reload", 2)
+            send_cmd("y", 1)
+
+            # Wait for system to come back up
+            self._wait_for_reboot()
+            
+            self.logger.info("EdgeConnect is ready")
+            self.running = True
 
         except Exception as e:
             self.logger.error(f"Failed to apply initial config: {e}")
+            # Still mark as running so containerlab doesn't hang
+            self.running = True
 
 
 class ECOS(vrnetlab.VR):
