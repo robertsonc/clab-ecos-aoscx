@@ -1,0 +1,26 @@
+# Disk images (large files)
+*.qcow2
+*.vmdk
+*.ova
+*.ovf
+
+# Environment files with credentials
+.env
+
+# ContainerLab generated directories
+clab-*/
+
+# Docker build artifacts
+docker/ecos/*.qcow2
+docker/aoscx/*.vmdk
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
