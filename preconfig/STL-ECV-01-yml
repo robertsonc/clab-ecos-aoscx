@@ -1,0 +1,62 @@
+# appliance info
+applianceInfo:
+  softwareVersion:
+  hostname: STL-ECV-01
+  group: MASTER
+  site: CLAB-STL
+  clusterProfile:
+  networkRole: non-hub
+  region:
+  location:
+    address: 8435 Roanoke Drive
+    address2:
+    city: St. Louis
+    state: Missouri
+    zipCode: 63121
+    country: US
+    latitude:
+    longitude:
+  contact:
+    name: ContainerLab
+    email: 
+    phoneNumber:
+# end of appliance info
+
+# deployment info
+deploymentInfo:
+  deploymentMode: inline-router
+  totalOutboundBandwidth: 600000
+  totalInboundBandwidth: 600000
+  passThroughShapedTraffic:
+    outboundMaxBandwidth: 10000000
+    
+  deploymentInterfaces:
+    - interfaceName: lan0
+      interfaceType: lan
+      interfaceComment: "to STL-vCX-01 1/1/1"
+      ipAddressMask: 10.2.0.0/31
+      nextHop:
+      segment: Default
+    - interfaceName: wan0
+      interfaceLabel: INET1
+      interfaceType: wan
+      interfaceComment: internet
+      ipAddressMask:
+      nextHop:
+      inboundMaxBandwidth: 200000
+      outboundMaxBandwidth: 200000
+      firewallMode: statefulSNAT
+      behindNat: none
+      segment: Default
+    - interfaceName: wan1
+      interfaceLabel: MPLS1
+      interfaceType: wan
+      interfaceComment: mpls
+      ipAddressMask:
+      nextHop:
+      inboundMaxBandwidth: 200000
+      outboundMaxBandwidth: 200000
+      firewallMode: All
+      behindNat: none
+      segment: Default
+# end of deployment info
