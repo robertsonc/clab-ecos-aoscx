@@ -1,0 +1,160 @@
+# ECOS + AOS-CX Lab Topology
+#
+# This topology creates a 3-site SD-WAN lab with:
+# - 3 EdgeConnect EC-V appliances (DFW, STL, CHI)
+# - 3 AOS-CX switches (one per site)
+# - 2 Linux nodes acting as internet and MPLS transport
+#
+# Site Layout:
+#   DFW (Dallas, TX)    - DFW-ECV-01 + DFW-vCX-01
+#   STL (St. Louis, MO) - STL-ECV-01 + STL-vCX-01
+#   CHI (Chicago, IL)   - CHI-ECV-01 + CHI-vCX-01
+
+name: chi-stl-dfw_ec-cx
+
+mgmt:
+  network: clab-mgmt
+  ipv4-subnet: 172.30.30.0/24
+
+topology:
+  kinds:
+    linux:
+      image: ghcr.io/srl-labs/network-multitool
+
+  nodes:
+    #
+    # === Transport Networks ===
+    #
+    internet:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool
+      mgmt-ipv4: 172.30.30.10
+      binds:
+        - ../configs/chi-stl-dfw-internet-dnsmasq.conf:/etc/dnsmasq.conf:ro
+      exec:
+        - sysctl -w net.ipv4.ip_forward=1
+        - ip addr add 192.168.100.1/24 dev eth1
+        - ip addr add 192.168.101.1/24 dev eth2
+        - ip addr add 192.168.102.1/24 dev eth3
+        - iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+        - iptables -A FORWARD -i eth0 -o eth1 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth0 -o eth2 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth0 -o eth3 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth2 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth3 -o eth0 -j ACCEPT
+        - apk add --no-cache dnsmasq
+        - dnsmasq
+
+    mpls:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool
+      mgmt-ipv4: 172.30.30.11
+      binds:
+        - ../configs/chi-stl-dfw-mpls-dnsmasq.conf:/etc/dnsmasq.conf:ro
+      exec:
+        - sysctl -w net.ipv4.ip_forward=1
+        - ip addr add 10.100.0.1/24 dev eth1
+        - ip addr add 10.100.1.1/24 dev eth2
+        - ip addr add 10.100.2.1/24 dev eth3
+        - iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+        - iptables -A FORWARD -i eth0 -o eth1 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth0 -o eth2 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth0 -o eth3 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth2 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth3 -o eth0 -j ACCEPT
+        - apk add --no-cache dnsmasq
+        - dnsmasq
+    #
+    # === Dallas Site (DFW) ===
+    #
+    DFW-ECV-01:
+      kind: generic_vm
+      image: vrnetlab/aruba_ecos:9.6.1.0_106887
+      mgmt-ipv4: 172.30.30.21
+      env:
+        ECOS_ADMIN_PASSWORD: ${ECOS_ADMIN_PASSWORD:-}
+        ECOS_REGISTRATION_KEY: ${ECOS_REGISTRATION_KEY:-}
+        ECOS_ACCOUNT_NAME: ${ECOS_ACCOUNT_NAME:-}
+        ECOS_SITE_TAG: Dallas_TX
+        ECOS_PORTAL_HOSTNAME: ${ECOS_PORTAL_HOSTNAME:-}
+
+    DFW-vCX-01:
+      kind: vr-aoscx
+      image: vrnetlab/aruba_arubaos-cx:20250822141147
+      mgmt-ipv4: 172.30.30.31
+      startup-config: ../configs/DFW-vCX-01.cfg
+      env:
+        AOSCX_ADMIN_PASSWORD: ${AOSCX_ADMIN_PASSWORD:-}
+
+    #
+    # === St. Louis Site (STL) ===
+    #
+    STL-ECV-01:
+      kind: generic_vm
+      image: vrnetlab/aruba_ecos:9.6.1.0_106887
+      mgmt-ipv4: 172.30.30.22
+      env:
+        ECOS_ADMIN_PASSWORD: ${ECOS_ADMIN_PASSWORD:-}
+        ECOS_REGISTRATION_KEY: ${ECOS_REGISTRATION_KEY:-}
+        ECOS_ACCOUNT_NAME: ${ECOS_ACCOUNT_NAME:-}
+        ECOS_SITE_TAG: StLouis_MO
+        ECOS_PORTAL_HOSTNAME: ${ECOS_PORTAL_HOSTNAME:-}
+
+    STL-vCX-01:
+      kind: vr-aoscx
+      image: vrnetlab/aruba_arubaos-cx:20250822141147
+      mgmt-ipv4: 172.30.30.32
+      startup-config: ../configs/STL-vCX-01.cfg
+      env:
+        AOSCX_ADMIN_PASSWORD: ${AOSCX_ADMIN_PASSWORD:-}
+
+    #
+    # === Chicago Site (CHI) ===
+    #
+    CHI-ECV-01:
+      kind: generic_vm
+      image: vrnetlab/aruba_ecos:9.6.1.0_106887
+      mgmt-ipv4: 172.30.30.23
+      env:
+        ECOS_ADMIN_PASSWORD: ${ECOS_ADMIN_PASSWORD:-}
+        ECOS_REGISTRATION_KEY: ${ECOS_REGISTRATION_KEY:-}
+        ECOS_ACCOUNT_NAME: ${ECOS_ACCOUNT_NAME:-}
+        ECOS_SITE_TAG: Chicago_IL
+        ECOS_PORTAL_HOSTNAME: ${ECOS_PORTAL_HOSTNAME:-}
+
+    CHI-vCX-01:
+      kind: vr-aoscx
+      image: vrnetlab/aruba_arubaos-cx:20250822141147
+      mgmt-ipv4: 172.30.30.33
+      startup-config: ../configs/CHI-vCX-01.cfg
+      env:
+        AOSCX_ADMIN_PASSWORD: ${AOSCX_ADMIN_PASSWORD:-}
+
+  links:
+    #
+    # === LAN Links (EC-V lan0 <-> AOS-CX 1/1/1) ===
+    #
+    # Dallas: DFW-ECV-01:lan0 (eth2) <-> DFW-vCX-01:1/1/1 (eth1)
+    - endpoints: ["DFW-ECV-01:eth2", "DFW-vCX-01:eth1"]
+
+    # St. Louis: STL-ECV-01:lan0 (eth2) <-> STL-vCX-01:1/1/1 (eth1)
+    - endpoints: ["STL-ECV-01:eth2", "STL-vCX-01:eth1"]
+
+    # Chicago: CHI-ECV-01:lan0 (eth2) <-> CHI-vCX-01:1/1/1 (eth1)
+    - endpoints: ["CHI-ECV-01:eth2", "CHI-vCX-01:eth1"]
+
+    #
+    # === WAN0 Links (EC-V wan0 <-> internet) ===
+    #
+    - endpoints: ["DFW-ECV-01:eth1", "internet:eth1"]
+    - endpoints: ["STL-ECV-01:eth1", "internet:eth2"]
+    - endpoints: ["CHI-ECV-01:eth1", "internet:eth3"]
+
+    #
+    # === WAN1 Links (EC-V wan1 <-> mpls) ===
+    #
+    - endpoints: ["DFW-ECV-01:eth3", "mpls:eth1"]
+    - endpoints: ["STL-ECV-01:eth3", "mpls:eth2"]
+    - endpoints: ["CHI-ECV-01:eth3", "mpls:eth3"]
