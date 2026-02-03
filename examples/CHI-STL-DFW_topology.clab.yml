@@ -43,6 +43,9 @@ topology:
         - iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
         - iptables -A FORWARD -i eth2 -o eth0 -j ACCEPT
         - iptables -A FORWARD -i eth3 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth1 -j ACCEPT
+        - iptables -A FORWARD -i eth2 -j ACCEPT
+        - iptables -A FORWARD -i eth3 -j ACCEPT
         - apk add --no-cache dnsmasq
         - dnsmasq
 
@@ -64,6 +67,9 @@ topology:
         - iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
         - iptables -A FORWARD -i eth2 -o eth0 -j ACCEPT
         - iptables -A FORWARD -i eth3 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth1 -j ACCEPT
+        - iptables -A FORWARD -i eth2 -j ACCEPT
+        - iptables -A FORWARD -i eth3 -j ACCEPT
         - apk add --no-cache dnsmasq
         - dnsmasq
     #
