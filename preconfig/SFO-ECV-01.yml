@@ -2,11 +2,11 @@
 applianceInfo:
   softwareVersion:
   hostname: SFO-ECV-01
-  group: MASTER
+  group: CLAB
   site: CLAB-SFO
   clusterProfile:
   networkRole: non-hub
-  region:
+  region: ga
   location:
     address: 1 Dr Carlton B Goodlett Pl
     address2:

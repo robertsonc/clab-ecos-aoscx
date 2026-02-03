@@ -2,11 +2,11 @@
 applianceInfo:
   softwareVersion:
   hostname: LAS-ECV-01
-  group: MASTER
+  group: CLAB
   site: CLAB-LAS
   clusterProfile:
   networkRole: non-hub
-  region:
+  region: ga
   location:
     address: 3150 Paradise Rd
     address2:

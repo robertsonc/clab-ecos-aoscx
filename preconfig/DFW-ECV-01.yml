@@ -2,11 +2,11 @@
 applianceInfo:
   softwareVersion:
   hostname: DFW-ECV-01
-  group: MASTER
+  group: CLAB
   site: CLAB-DFW
   clusterProfile:
   networkRole: non-hub
-  region:
+  region: lab
   location:
     address: 411 Elm St
     address2:

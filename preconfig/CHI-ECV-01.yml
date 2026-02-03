@@ -2,11 +2,11 @@
 applianceInfo:
   softwareVersion:
   hostname: CHI-ECV-01
-  group: MASTER
+  group: CLAB
   site: CLAB-CHI
   clusterProfile:
   networkRole: non-hub
-  region:
+  region: lab
   location:
     address: 330 N. Wabash Ave
     address2:

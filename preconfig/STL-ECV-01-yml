@@ -2,11 +2,11 @@
 applianceInfo:
   softwareVersion:
   hostname: STL-ECV-01
-  group: MASTER
+  group: CLAB
   site: CLAB-STL
   clusterProfile:
   networkRole: non-hub
-  region:
+  region: lab
   location:
     address: 8435 Roanoke Drive
     address2:

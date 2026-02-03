@@ -2,11 +2,11 @@
 applianceInfo:
   softwareVersion:
   hostname: SEA-ECV-01
-  group: MASTER
+  group: CLAB
   site: CLAB-SEA
   clusterProfile:
   networkRole: non-hub
-  region:
+  region: ga
   location:
     address: 400 Broad St
     address2:
