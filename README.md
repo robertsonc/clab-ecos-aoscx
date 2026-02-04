@@ -331,6 +331,80 @@ docker ps --format "table {{.Names}}\t{{.Status}}"
 docker inspect --format='{{.State.Health.Status}}' clab-ecos-aoscx-DFW-ECV-01
 ```
 
+### EC-Vs Not Showing Up in Orchestrator
+
+If your EdgeConnect appliances are deployed but not appearing in Orchestrator, the environment variables (`ECOS_ACCOUNT_NAME`, `ECOS_REGISTRATION_KEY`) may not have been passed into the containers correctly.
+
+**Verify the environment variables inside a container:**
+
+```bash
+# Check a single EC-V container
+docker exec clab-chi-stl-dfw_ec-cx-DFW-ECV-01 printenv | grep ECOS
+
+# Check all EC-V containers at once
+for ecv in DFW-ECV-01 STL-ECV-01 CHI-ECV-01; do
+  echo "=== $ecv ==="
+  docker exec clab-chi-stl-dfw_ec-cx-$ecv printenv | grep ECOS
+done
+```
+
+If the variables are missing or contain literal `$` references, destroy and redeploy with the correct environment:
+
+```bash
+sudo clab destroy -t examples/topology.clab.yml --cleanup
+source .env
+echo $ECOS_ACCOUNT_NAME   # verify it's set
+sudo -E clab deploy -t examples/topology.clab.yml
+```
+
+### Performance Problems / Tunnels Not Coming Up or Unstable
+
+If tunnels are failing to establish or are flapping, the host may be under resource pressure. Check host resources and container utilization:
+
+```bash
+# Check host CPU and memory
+free -h
+nproc
+uptime
+
+# Check resource usage across all lab containers
+docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}" | grep clab
+
+# Check for CPU steal or overcommit (high steal% means the host itself is a VM that is overprovisioned)
+top -bn1 | head -5
+
+# Check disk I/O which can impact QEMU performance
+iostat -x 1 3
+
+# Check for out-of-memory kills
+dmesg | grep -i "oom\|killed process" | tail -10
+```
+
+Each EC-V requires ~4GB RAM and each AOS-CX requires ~8GB RAM. The full 3-site topology needs approximately 40GB+ total. If the host is under pressure, consider deploying fewer nodes.
+
+### Not Sure if EC-Vs Have Actually Booted
+
+The vrnetlab launch script runs QEMU inside each container. You can verify that the VM is running and has completed booting by checking for the QEMU process and looking for the "login prompt detected" message in the container logs:
+
+```bash
+# Check if QEMU is running inside each EC-V container
+for ecv in DFW-ECV-01 STL-ECV-01 CHI-ECV-01; do
+  echo "=== $ecv ==="
+  docker exec clab-chi-stl-dfw_ec-cx-$ecv ps aux | grep qemu
+done
+
+# Check container logs for the login prompt detection (indicates boot completed)
+for ecv in DFW-ECV-01 STL-ECV-01 CHI-ECV-01; do
+  echo "=== $ecv ==="
+  docker logs clab-chi-stl-dfw_ec-cx-$ecv 2>&1 | grep -i "login prompt"
+done
+
+# Follow logs in real time for a specific node to watch boot progress
+docker logs -f clab-chi-stl-dfw_ec-cx-DFW-ECV-01
+```
+
+If QEMU is not running, check for KVM/permission issues. If QEMU is running but no login prompt is detected, the VM may still be booting or may have failed during startup — check the full logs for errors.
+
 ### Clean Restart
 
 ```bash
