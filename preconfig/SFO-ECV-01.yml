@@ -22,6 +22,21 @@ applianceInfo:
     phoneNumber:
 # end of appliance info
 
+# template groups
+templateGroups:
+  groups:
+    - Default Template Group
+# end of template groups
+
+# overlays
+businessIntentOverlays:
+    overlays:
+      - RealTime
+      - CriticalApps
+      - BulkApps
+      - DefaultOverlay
+# end of overlays
+
 # deployment info
 deploymentInfo:
   deploymentMode: inline-router
