@@ -75,3 +75,31 @@ deploymentInfo:
       behindNat: none
       segment: Default
 # end of deployment info
+
+# ospf configuration
+segmentOspfConfig:
+  - segment: Default
+    enable: true
+    routerId: 172.30.30.23
+    redistMapToOspf: loopback_to_ospf
+    opaqueEnable: true
+    areas:
+      - areaId: 0.0.0.0
+        areaType: 0
+
+    interfaces:
+      - interfaceName: lan0
+        areaId: 0.0.0.0
+        cost: 1
+        priority: 1
+        adminStatus: Up
+        helloInterval: 10
+        deadInterval: 40
+        transmitDelay: 1
+        retransmitInterval: 4
+        authentication: None
+        authenticationKey:
+        md5Key: 0
+        md5Password:
+        comment:
+# end of ospf configuration
