@@ -36,6 +36,8 @@ businessIntentOverlays:
       - CriticalApps
       - BulkApps
       - DefaultOverlay
+      - CSN_LBO
+      - CSN_SSE
 # end of overlays
 
 # deployment info
