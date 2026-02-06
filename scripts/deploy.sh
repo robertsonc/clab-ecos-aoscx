@@ -58,7 +58,7 @@ wait_for_ssh() {
 
 ssh_push() {
     local host=$1 cfg_path=$2
-    { echo "configure terminal"; cat "$cfg_path"; echo "end"; echo "write memory"; } | \
+    { echo "configure terminal"; cat "$cfg_path"; echo "end"; echo "write memory"; echo "exit"; } | \
         sshpass -e ssh $SSH_OPTS admin@"$host" 2>&1
 }
 
