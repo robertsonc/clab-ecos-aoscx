@@ -76,6 +76,18 @@ deploymentInfo:
       segment: Default
 # end of deployment info
 
+# loopback configuration
+loopbackInterface:
+  loopbacks:
+    - interfaceId: lo0
+      adminStatus: Up
+      ipAddressMask: 198.19.0.5
+      interfaceLabel:
+      zone: default
+      role: default
+      segment: Default
+# end of loopback configuration
+
 # ospf configuration
 segmentOspfConfig:
   - segment: Default
@@ -122,7 +134,7 @@ segmentBgpSystems:
     neighbors:
       # IPV6 BGP peers are only supported from ECOS 9.3.0 and above
       - peerIpAddress: 198.18.5.1
-        sourceIpInterface:
+        sourceIpInterface: lo0
         peerAsn: 65005
         peerType: Branch
         enableNeighbor: true
