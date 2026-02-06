@@ -126,6 +126,7 @@ segmentOspfConfig:
 segmentBgpSystems:
   - segment: Default
     enable: true
+    asn: 64004
     routerId: 172.30.30.24
     enableGracefulRestart: true
     maxRestartTime: 120
