@@ -200,6 +200,49 @@ segmentBgpSystems:
     exportRouteTarget: 65005:10012
 # end of bgp configuration
 
+# segment local routes
+segmentLocalRoutes:
+  - segment: CSN_Managed
+    routes:
+      - routeIpSubnet: 0.0.0.0/0
+        nextHop:
+        interfaceName:
+        metric: 50
+        advertise: true
+        advertiseToBgp: false
+        advertiseToOspf: false
+        tag: ANY
+        zone:
+        comment: Default for CSN_Managed
+        routeLabel: Internet
+  - segment: CSN_Unmanaged
+    routes:
+      - routeIpSubnet: 0.0.0.0/0
+        nextHop:
+        interfaceName:
+        metric: 50
+        advertise: true
+        advertiseToBgp: false
+        advertiseToOspf: false
+        tag: ANY
+        zone:
+        comment: Default for CSN_Unmanaged
+        routeLabel: Internet
+  - segment: CSN_Guest
+    routes:
+      - routeIpSubnet: 0.0.0.0/0
+        nextHop:
+        interfaceName:
+        metric: 50
+        advertise: true
+        advertiseToBgp: false
+        advertiseToOspf: false
+        tag: ANY
+        zone:
+        comment: Default for CSN_Guest
+        routeLabel: Internet
+# end of segment local routes
+
 # vxlan configuration
 vxlan:
   destinationUdpPort: 4789
