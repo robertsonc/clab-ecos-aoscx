@@ -145,49 +145,49 @@ topology:
       kind: linux
       image: ghcr.io/srl-labs/network-multitool
       exec:
-        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "udhcpc -i eth1 && ip route del default dev eth0 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
     DFW-client-unmanaged:
       kind: linux
       image: ghcr.io/srl-labs/network-multitool
       exec:
-        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "udhcpc -i eth1 && ip route del default dev eth0 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
     DFW-client-guest:
       kind: linux
       image: ghcr.io/srl-labs/network-multitool
       exec:
-        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "udhcpc -i eth1 && ip route del default dev eth0 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
 
     STL-client-managed:
       kind: linux
       image: ghcr.io/srl-labs/network-multitool
       exec:
-        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "udhcpc -i eth1 && ip route del default dev eth0 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
     STL-client-unmanaged:
       kind: linux
       image: ghcr.io/srl-labs/network-multitool
       exec:
-        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "udhcpc -i eth1 && ip route del default dev eth0 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
     STL-client-guest:
       kind: linux
       image: ghcr.io/srl-labs/network-multitool
       exec:
-        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "udhcpc -i eth1 && ip route del default dev eth0 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
 
     CHI-client-managed:
       kind: linux
       image: ghcr.io/srl-labs/network-multitool
       exec:
-        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "udhcpc -i eth1 && ip route del default dev eth0 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
     CHI-client-unmanaged:
       kind: linux
       image: ghcr.io/srl-labs/network-multitool
       exec:
-        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "udhcpc -i eth1 && ip route del default dev eth0 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
     CHI-client-guest:
       kind: linux
       image: ghcr.io/srl-labs/network-multitool
       exec:
-        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "udhcpc -i eth1 && ip route del default dev eth0 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
 
   links:
     #
