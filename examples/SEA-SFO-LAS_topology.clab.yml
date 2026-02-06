@@ -28,7 +28,7 @@ topology:
     internet:
       kind: linux
       image: ghcr.io/srl-labs/network-multitool
-      mgmt-ipv4: 172.30.30.10
+      mgmt-ipv4: 172.30.30.12
       binds:
         - ../configs/sea-sfo-las-internet-dnsmasq.conf:/etc/dnsmasq.conf:ro
       exec:
@@ -52,7 +52,7 @@ topology:
     mpls:
       kind: linux
       image: ghcr.io/srl-labs/network-multitool
-      mgmt-ipv4: 172.30.30.11
+      mgmt-ipv4: 172.30.30.13
       binds:
         - ../configs/sea-sfo-las-mpls-dnsmasq.conf:/etc/dnsmasq.conf:ro
       exec:
