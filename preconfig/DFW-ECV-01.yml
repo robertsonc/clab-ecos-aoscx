@@ -153,6 +153,48 @@ segmentBgpSystems:
         holdTime: 90
         password:
         enableEVPN: true
+
+  - segment: CSN_Managed
+    enable: true
+    asn: 64001
+    routerId: 172.30.30.21
+    enableGracefulRestart: true
+    maxRestartTime: 120
+    maxStalePathTime: 150
+    redistToSilverPeak: true
+    propagateAsPath: true
+    redistOspfToBgp: true
+    filterTag: 0
+    importRouteTarget: 65001:10010
+    exportRouteTarget: 65001:10010
+
+  - segment: CSN_Unmanaged
+    enable: true
+    asn: 64001
+    routerId: 172.30.30.21
+    enableGracefulRestart: true
+    maxRestartTime: 120
+    maxStalePathTime: 150
+    redistToSilverPeak: true
+    propagateAsPath: true
+    redistOspfToBgp: true
+    filterTag: 0
+    importRouteTarget: 65001:10011
+    exportRouteTarget: 65001:10011
+
+  - segment: CSN_Guest
+    enable: true
+    asn: 64001
+    routerId: 172.30.30.21
+    enableGracefulRestart: true
+    maxRestartTime: 120
+    maxStalePathTime: 150
+    redistToSilverPeak: true
+    propagateAsPath: true
+    redistOspfToBgp: true
+    filterTag: 0
+    importRouteTarget: 65001:10012
+    exportRouteTarget: 65001:10012
 # end of bgp configuration
 
 # vxlan configuration
