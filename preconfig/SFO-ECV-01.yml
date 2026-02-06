@@ -148,8 +148,8 @@ segmentBgpSystems:
         enableNeighbor: true
         softReconfiguration: false
         nextHopSelf: true
-        inboundRouteMap : default_rtmap_bgp_inbound_br
-        outboundRouteMap : default_rtmap_bgp_outbound_br
+        inboundRouteMap : evpn_in
+        outboundRouteMap : evpn_out
         keepAlive: 30
         holdTime: 90
         password:
