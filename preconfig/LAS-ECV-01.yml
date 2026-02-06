@@ -103,3 +103,35 @@ segmentOspfConfig:
         md5Password:
         comment:
 # end of ospf configuration
+
+# bgp configuration
+segmentBgpSystems:
+  - segment: Default
+    enable: true
+    routerId: 172.30.30.26
+    enableGracefulRestart: true
+    maxRestartTime: 120
+    maxStalePathTime: 150
+    redistToSilverPeak: true
+    propagateAsPath: true
+    redistOspfToBgp: true
+    filterTag: 0
+    importRouteTarget:
+    exportRouteTarget:
+
+    neighbors:
+      # IPV6 BGP peers are only supported from ECOS 9.3.0 and above
+      - peerIpAddress: 198.18.6.1
+        sourceIpInterface:
+        peerAsn: 65006
+        peerType: Branch
+        enableNeighbor: true
+        softReconfiguration: false
+        nextHopSelf: true
+        inboundRouteMap : default_rtmap_bgp_inbound_br
+        outboundRouteMap : default_rtmap_bgp_outbound_br
+        keepAlive: 30
+        holdTime: 90
+        password:
+        enableEVPN: true
+# end of bgp configuration
