@@ -28,7 +28,7 @@ declare -A TOPO_CLIENTS=(
     [sea-sfo-las]="SEA-client-managed SEA-client-unmanaged SEA-client-guest SFO-client-managed SFO-client-unmanaged SFO-client-guest LAS-client-managed LAS-client-unmanaged LAS-client-guest"
 )
 
-SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
+SSH_OPTS="-T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
 SSH_TIMEOUT=300  # 5 minutes
 SSH_POLL=10      # poll interval in seconds
 
@@ -67,9 +67,15 @@ push_config() {
 
     log "Pushing config to $name ($host) from $cfg..."
     export SSHPASS="$AOSCX_ADMIN_PASSWORD"
-    { echo "configure terminal"; cat "$cfg_path"; echo "end"; echo "write memory"; } | \
-        sshpass -e ssh $SSH_OPTS admin@"$host" 2>/dev/null
-    log "Config applied to $name"
+    local output
+    if output=$({ echo "configure terminal"; cat "$cfg_path"; echo "end"; echo "write memory"; } | \
+        sshpass -e ssh $SSH_OPTS admin@"$host" 2>&1); then
+        log "Config applied to $name"
+    else
+        err "Config push to $name may have failed (exit code $?). SSH output:"
+        echo "$output" >&2
+        return 1
+    fi
 }
 
 renew_client_dhcp() {
@@ -104,13 +110,17 @@ deploy_topology() {
 
     log "Waiting for vCX switches to boot and pushing configs..."
     local switches="${TOPO_SWITCHES[$topo]}"
+    local failed=0
     for entry in $switches; do
         IFS=: read -r name ip cfg <<< "$entry"
-        wait_for_ssh "$ip" "$name"
+        wait_for_ssh "$ip" "$name" || { failed=$((failed + 1)); continue; }
         # Brief pause after SSH is reachable to let the CLI fully initialize
         sleep 5
-        push_config "$name" "$ip" "$cfg"
+        push_config "$name" "$ip" "$cfg" || { failed=$((failed + 1)); continue; }
     done
+    if [ "$failed" -gt 0 ]; then
+        err "$failed switch(es) failed config push in $topo"
+    fi
 
     renew_client_dhcp "$topo"
 }
