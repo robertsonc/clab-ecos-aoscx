@@ -28,7 +28,7 @@ declare -A TOPO_CLIENTS=(
     [sea-sfo-las]="SEA-client-managed SEA-client-unmanaged SEA-client-guest SFO-client-managed SFO-client-unmanaged SFO-client-guest LAS-client-managed LAS-client-unmanaged LAS-client-guest"
 )
 
-SSH_OPTS="-T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
+SSH_OPTS="-T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10"
 SSH_TIMEOUT=300  # 5 minutes
 SSH_POLL=10      # poll interval in seconds
 
@@ -45,7 +45,7 @@ wait_for_ssh() {
     local host=$1 name=$2
     local elapsed=0
     log "Waiting for SSH on $name ($host)..."
-    while ! nc -z -w2 "$host" 22 &>/dev/null; do
+    while ! ssh-keyscan -T 5 "$host" 2>/dev/null | grep -q .; do
         sleep "$SSH_POLL"
         elapsed=$((elapsed + SSH_POLL))
         if [ "$elapsed" -ge "$SSH_TIMEOUT" ]; then
@@ -53,7 +53,7 @@ wait_for_ssh() {
             return 1
         fi
     done
-    log "SSH reachable on $name ($host) after ~${elapsed}s"
+    log "SSH ready on $name ($host) after ~${elapsed}s"
 }
 
 push_config() {
@@ -114,8 +114,6 @@ deploy_topology() {
     for entry in $switches; do
         IFS=: read -r name ip cfg <<< "$entry"
         wait_for_ssh "$ip" "$name" || { failed=$((failed + 1)); continue; }
-        # Brief pause after SSH is reachable to let the CLI fully initialize
-        sleep 5
         push_config "$name" "$ip" "$cfg" || { failed=$((failed + 1)); continue; }
     done
     if [ "$failed" -gt 0 ]; then
