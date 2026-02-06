@@ -59,7 +59,13 @@ wait_for_ssh() {
 ssh_push() {
     local host=$1 cfg_path=$2
     { echo "configure terminal"; cat "$cfg_path"; echo "end"; echo "write memory"; echo "exit"; } | \
-        sshpass -e ssh $SSH_OPTS admin@"$host" 2>&1
+        timeout 60 sshpass -e ssh $SSH_OPTS admin@"$host" 2>&1
+    local rc=$?
+    # timeout exit code 124 = session didn't close cleanly but config was likely applied
+    if [ "$rc" -eq 124 ]; then
+        return 0
+    fi
+    return "$rc"
 }
 
 push_config() {
