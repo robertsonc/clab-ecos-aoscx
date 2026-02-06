@@ -56,6 +56,12 @@ wait_for_ssh() {
     log "SSH ready on $name ($host) after ~${elapsed}s"
 }
 
+ssh_push() {
+    local host=$1 cfg_path=$2
+    { echo "configure terminal"; cat "$cfg_path"; echo "end"; echo "write memory"; } | \
+        sshpass -e ssh $SSH_OPTS admin@"$host" 2>&1
+}
+
 push_config() {
     local name=$1 host=$2 cfg=$3
     local cfg_path="$REPO_ROOT/$cfg"
@@ -66,16 +72,26 @@ push_config() {
     fi
 
     log "Pushing config to $name ($host) from $cfg..."
+    local output rc
     export SSHPASS="$AOSCX_ADMIN_PASSWORD"
-    local output
-    if output=$({ echo "configure terminal"; cat "$cfg_path"; echo "end"; echo "write memory"; } | \
-        sshpass -e ssh $SSH_OPTS admin@"$host" 2>&1); then
+    output=$(ssh_push "$host" "$cfg_path") && rc=$? || rc=$?
+    if [ "$rc" -eq 0 ]; then
         log "Config applied to $name"
-    else
-        err "Config push to $name may have failed (exit code $?). SSH output:"
-        echo "$output" >&2
-        return 1
+        return 0
     fi
+    # Exit code 5 = wrong password — try default admin/admin
+    if [ "$rc" -eq 5 ]; then
+        log "Password rejected on $name, retrying with default (admin)..."
+        export SSHPASS="admin"
+        output=$(ssh_push "$host" "$cfg_path") && rc=$? || rc=$?
+        if [ "$rc" -eq 0 ]; then
+            log "Config applied to $name (using default password)"
+            return 0
+        fi
+    fi
+    err "Config push to $name failed (exit code $rc). SSH output:"
+    echo "$output" >&2
+    return 1
 }
 
 renew_client_dhcp() {
@@ -116,6 +132,12 @@ deploy_topology() {
         wait_for_ssh "$ip" "$name" || { failed=$((failed + 1)); continue; }
         push_config "$name" "$ip" "$cfg" || { failed=$((failed + 1)); continue; }
     done
+    local total
+    total=$(echo "$switches" | wc -w)
+    if [ "$failed" -eq "$total" ]; then
+        err "All switch config pushes failed in $topo — skipping DHCP renewal"
+        return 1
+    fi
     if [ "$failed" -gt 0 ]; then
         err "$failed switch(es) failed config push in $topo"
     fi
