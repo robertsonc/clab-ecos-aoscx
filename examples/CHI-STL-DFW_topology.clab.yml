@@ -138,6 +138,57 @@ topology:
       env:
         AOSCX_ADMIN_PASSWORD: ${AOSCX_ADMIN_PASSWORD:-}
 
+    #
+    # === Test Clients ===
+    #
+    DFW-client-managed:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+    DFW-client-unmanaged:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+    DFW-client-guest:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+
+    STL-client-managed:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+    STL-client-unmanaged:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+    STL-client-guest:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+
+    CHI-client-managed:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+    CHI-client-unmanaged:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+    CHI-client-guest:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - sh -c "udhcpc -i eth1 && ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+
   links:
     #
     # === LAN Links (EC-V lan0 <-> AOS-CX 1/1/1) ===
@@ -164,3 +215,21 @@ topology:
     - endpoints: ["DFW-ECV-01:eth3", "mpls:eth1"]
     - endpoints: ["STL-ECV-01:eth3", "mpls:eth2"]
     - endpoints: ["CHI-ECV-01:eth3", "mpls:eth3"]
+
+    #
+    # === Client Links (client:eth1 <-> vCX access ports) ===
+    #
+    # Dallas clients
+    - endpoints: ["DFW-client-managed:eth1", "DFW-vCX-01:eth2"]
+    - endpoints: ["DFW-client-unmanaged:eth1", "DFW-vCX-01:eth3"]
+    - endpoints: ["DFW-client-guest:eth1", "DFW-vCX-01:eth4"]
+
+    # St. Louis clients
+    - endpoints: ["STL-client-managed:eth1", "STL-vCX-01:eth2"]
+    - endpoints: ["STL-client-unmanaged:eth1", "STL-vCX-01:eth3"]
+    - endpoints: ["STL-client-guest:eth1", "STL-vCX-01:eth4"]
+
+    # Chicago clients
+    - endpoints: ["CHI-client-managed:eth1", "CHI-vCX-01:eth2"]
+    - endpoints: ["CHI-client-unmanaged:eth1", "CHI-vCX-01:eth3"]
+    - endpoints: ["CHI-client-guest:eth1", "CHI-vCX-01:eth4"]
