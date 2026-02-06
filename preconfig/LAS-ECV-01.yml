@@ -147,3 +147,26 @@ segmentBgpSystems:
         password:
         enableEVPN: true
 # end of bgp configuration
+
+# vxlan configuration
+vxlan:
+  destinationUdpPort: 4789
+  vtepSrcInterface: lo0
+  vniVrfMaps:
+    - vni: 10000
+      segment: Default
+      zone: Default
+      role: default
+    - vni: 10010
+      segment: CSN_Managed
+      zone: Default
+      role: default
+    - vni: 10011
+      segment: CSN_Unmanaged
+      zone: Default
+      role: default
+    - vni: 10012
+      segment: CSN_Guest
+      zone: Default
+      role: default
+# end of vxlan configuration
