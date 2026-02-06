@@ -26,6 +26,7 @@ applianceInfo:
 templateGroups:
   groups:
     - Default Template Group
+    - VXLAN
 # end of template groups
 
 # overlays
@@ -201,17 +202,4 @@ segmentBgpSystems:
 vxlan:
   destinationUdpPort: 4789
   vtepSrcInterface: lo0
-  vniVrfMaps:
-    - vni: 10000
-      segment: Default
-      zone: Default
-    - vni: 10010
-      segment: CSN_Managed
-      zone: Default
-    - vni: 10011
-      segment: CSN_Unmanaged
-      zone: Default
-    - vni: 10012
-      segment: CSN_Guest
-      zone: Default
 # end of vxlan configuration
