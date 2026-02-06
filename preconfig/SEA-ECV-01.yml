@@ -81,9 +81,9 @@ loopbackInterface:
   loopbacks:
     - interfaceId: lo0
       adminStatus: Up
-      ipAddressMask: 198.19.0.4
+      ipAddressMask: 198.19.0.4/32
       interfaceLabel:
-      zone: default
+      zone: Default
       role: default
       segment: Default
 # end of loopback configuration
