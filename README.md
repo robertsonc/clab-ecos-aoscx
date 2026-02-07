@@ -5,9 +5,11 @@ Run HPE Aruba EdgeConnect SD-WAN and AOS-CX switches together in ContainerLab.
 ## What's This?
 
 This repo provides everything needed to run a complete EdgeConnect SD-WAN lab with:
-- **EdgeConnect Virtual (EC-V)** - SD-WAN appliances
-- **AOS-CX Virtual (vCX)** - Data center switches
-- **Linux transport nodes** - Simulating internet and MPLS networks
+- **EdgeConnect Virtual (EC-V)** - SD-WAN appliances with Orchestrator preconfigurations
+- **AOS-CX Virtual (vCX)** - Data center switches with full VXLAN/EVPN, BGP, OSPF, and VRF configurations
+- **Linux transport nodes** - Simulating internet and MPLS WAN networks with DHCP
+- **Test clients** - Per-segment clients for validating end-to-end connectivity
+- **Deploy/destroy scripts** - Automated topology deployment with config push and teardown
 
 Built on [vrnetlab](https://github.com/srl-labs/vrnetlab) for packaging VMs in containers and [ContainerLab](https://containerlab.dev/) for topology orchestration.
 
@@ -15,32 +17,71 @@ Built on [vrnetlab](https://github.com/srl-labs/vrnetlab) for packaging VMs in c
 
 ![Lab Topology](topology.png)
 
-**Connections:**
-- All EC-V `wan0` interfaces connect to **internet** (Linux node)
-- All EC-V `wan1` interfaces connect to **mpls** (Linux node)
+The lab consists of two independent 3-site topologies that can be deployed individually or together:
+
+**Topology 1: CHI-STL-DFW** (Chicago, St. Louis, Dallas)
 - DFW-ECV-01 `lan0` ↔ DFW-vCX-01 `1/1/1`
 - STL-ECV-01 `lan0` ↔ STL-vCX-01 `1/1/1`
 - CHI-ECV-01 `lan0` ↔ CHI-vCX-01 `1/1/1`
+- All EC-V `wan0` → **internet** transport node
+- All EC-V `wan1` → **mpls** transport node
+- 9 test clients (3 per site: managed, unmanaged, guest)
 
-### Current State
+**Topology 2: SEA-SFO-LAS** (Seattle, San Francisco, Las Vegas)
+- SEA-ECV-01 `lan0` ↔ SEA-vCX-01 `1/1/1`
+- SFO-ECV-01 `lan0` ↔ SFO-vCX-01 `1/1/1`
+- LAS-ECV-01 `lan0` ↔ LAS-vCX-01 `1/1/1`
+- All EC-V `wan0` → **internet** transport node
+- All EC-V `wan1` → **mpls** transport node
+- 9 test clients (3 per site: managed, unmanaged, guest)
 
-> **Note:** This project deploys the containers and performs basic bootstrapping (hostname, admin credentials, SSH/HTTPS enablement). All EdgeConnect and AOS-CX configuration beyond bootstrapping must be done manually:
-> - **EdgeConnect**: Configure via Orchestrator or local Web UI
-> - **AOS-CX**: Configure via SSH or REST-API
->
-> Future iterations will include cloud-init support for EC-V and built-in AOS-CX startup configurations to have the lab fully operational out of the box. I may also provide a YAML preconfiguration for one of the EC-Vs to support automated provisioning via Orchestrator. 
+Each topology uses its own transport nodes with unique management IPs to allow both to run simultaneously.
+
+### Network Design
+
+Each site follows the same architecture:
+
+- **EdgeConnect EC-V** handles SD-WAN overlay, connecting to two WAN transports (internet + MPLS) and one LAN interface to the local vCX switch
+- **AOS-CX vCX** provides LAN switching with three customer segments (VRFs) and VXLAN/EVPN for cross-site L2/L3 connectivity
+- **Test clients** attach to access ports on the vCX, one per customer segment
+
+**Routing and overlay stack:**
+
+| Layer | Technology | Details |
+|-------|-----------|---------|
+| Underlay | OSPF (area 0) | EC-V ↔ vCX LAN adjacency, loopback reachability |
+| Overlay control | BGP (eBGP multihop) | EC-V AS 64001 ↔ vCX AS 65001, L2VPN EVPN address-family |
+| Overlay data | VXLAN | 6 VNIs per site (3 L2 bridge + 3 L3 routing per VRF) |
+| Segmentation | VRFs | CSN_Managed, CSN_Unmanaged, CSN_Guest |
+| VLANs | 1010, 1011, 1012 | Mapped to Managed, Unmanaged, Guest segments |
+| Client services | DHCP | Per-VRF DHCP servers on each vCX |
+
+### What Gets Configured Automatically
+
+**AOS-CX switches** receive full startup configurations via the deploy script:
+- VRFs (CSN_Managed, CSN_Unmanaged, CSN_Guest) with EVPN route-targets
+- OSPF and BGP (with EVPN address-family)
+- VXLAN tunnel with L2 and L3 VNIs
+- VLANs, SVI interfaces, and access ports
+- DHCP servers per VRF
+
+**EdgeConnect EC-V** appliances boot with basic credentials and Orchestrator registration info. Orchestrator preconfigurations are provided in `preconfig/` for import into Orchestrator to complete provisioning (deployment mode, interfaces, OSPF, BGP, VXLAN, overlays, and segments).
+
+**Transport nodes** (internet and MPLS) configure themselves with IP addressing, DHCP (dnsmasq), IP forwarding, and NAT rules.
+
+**Test clients** obtain DHCP addresses from their respective vCX VRF and set a default route via the LAN.
 
 ## Prerequisites
 
 ### System Requirements
 
-| Requirement | Minimum | Notes |
-|-------------|---------|-------|
-| **OS** | Linux (Ubuntu 20.04+, Debian 11+, RHEL 8+) | Native Linux required |
-| **CPU** | 8+ cores with virtualization extensions | Intel VT-x or AMD-V required |
-| **RAM** | 40GB+ | EC-V: 4GB x 3 = 12GB, AOS-CX: 8GB x 3 = 24GB, Linux: minimal |
-| **Disk** | 50GB free | For Docker images and VM disks |
-| **KVM** | Enabled and accessible | Required for running VMs in containers |
+| Requirement | Minimum (single topology) | Full lab (both topologies) | Notes |
+|-------------|---------------------------|----------------------------|-------|
+| **OS** | Linux (Ubuntu 20.04+, Debian 11+, RHEL 8+) | Same | Native Linux required |
+| **CPU** | 8+ cores with virtualization extensions | 16+ cores | Intel VT-x or AMD-V required |
+| **RAM** | 40GB+ | 80GB+ | EC-V: 4GB x 3, AOS-CX: 8GB x 3 per topology |
+| **Disk** | 50GB free | 100GB free | For Docker images and VM disks |
+| **KVM** | Enabled and accessible | Same | Required for running VMs in containers |
 
 ### Required Software
 
@@ -48,6 +89,7 @@ Built on [vrnetlab](https://github.com/srl-labs/vrnetlab) for packaging VMs in c
 2. **Docker** - Container runtime
 3. **ContainerLab** - Network topology orchestration
 4. **vrnetlab** - Framework for packaging VMs into container images
+5. **sshpass** - Used by the deploy script for SSH config push to AOS-CX
 
 ### Required Images (Note: Obtain these from HPE/Aruba)
 
@@ -182,7 +224,7 @@ vi .env
 
 ### 2. Update Topology Image Tags
 
-Edit `examples/topology.clab.yml` to match your image versions:
+Edit the topology files in `examples/` to match your image versions:
 
 ```yaml
 # Update these to match your built images
@@ -190,19 +232,31 @@ image: vrnetlab/aruba_ecos:9.6.1.0_106887
 image: vrnetlab/aruba_arubaos-cx:20250822141147
 ```
 
-### 3. Deploy the Lab
+### 3. Install sshpass
+
+The deploy script uses sshpass to push configurations to AOS-CX switches via SSH:
+
+```bash
+sudo apt install sshpass
+```
+
+### 4. Deploy the Lab
+
+The deploy script handles topology deployment, waits for AOS-CX switches to boot, pushes startup configurations via SSH, and renews DHCP leases on test clients.
 
 ```bash
 # Source environment variables first
 source .env
 
-# Deploy with sudo -E to preserve environment variables
-sudo -E clab deploy -t examples/topology.clab.yml
+# Deploy a single topology
+./scripts/deploy.sh chi-stl-dfw
+./scripts/deploy.sh sea-sfo-las
+
+# Or deploy both topologies
+./scripts/deploy.sh all
 ```
 
-> **Important:** The `-E` flag is required to pass environment variables (like `ECOS_REGISTRATION_KEY` and `ECOS_ACCOUNT_NAME`) to the containers. Without it, the literal variable names (e.g., `$ECOS_REGISTRATION_KEY`) will appear in your device configuration instead of the actual values.
-
-### 4. Monitor Boot Progress
+### 5. Monitor Boot Progress
 
 EC-V boots in ~60-90 seconds, AOS-CX takes ~2-3 minutes:
 
@@ -211,11 +265,13 @@ EC-V boots in ~60-90 seconds, AOS-CX takes ~2-3 minutes:
 watch docker ps
 
 # Check specific node logs
-docker logs -f clab-ecos-aoscx-DFW-ECV-01
-docker logs -f clab-ecos-aoscx-DFW-vCX-01
+docker logs -f clab-chi-stl-dfw_ec-cx-DFW-ECV-01
+docker logs -f clab-chi-stl-dfw_ec-cx-DFW-vCX-01
 ```
 
-### 5. Access Your Devices
+### 6. Access Your Devices
+
+**CHI-STL-DFW Topology:**
 
 | Node | Type | Web UI | SSH |
 |------|------|--------|-----|
@@ -225,15 +281,33 @@ docker logs -f clab-ecos-aoscx-DFW-vCX-01
 | DFW-vCX-01 | AOS-CX | https://172.30.30.31 | ssh admin@172.30.30.31 |
 | STL-vCX-01 | AOS-CX | https://172.30.30.32 | ssh admin@172.30.30.32 |
 | CHI-vCX-01 | AOS-CX | https://172.30.30.33 | ssh admin@172.30.30.33 |
-| INTERNET | Linux | N/A | docker exec -it clab-ecos-aoscx-internet bash |
-| MPLS | Linux | N/A | docker exec -it clab-ecos-aoscx-mpls bash |
+| internet | Linux | N/A | docker exec -it clab-chi-stl-dfw_ec-cx-internet bash |
+| mpls | Linux | N/A | docker exec -it clab-chi-stl-dfw_ec-cx-mpls bash |
+
+**SEA-SFO-LAS Topology:**
+
+| Node | Type | Web UI | SSH |
+|------|------|--------|-----|
+| SEA-ECV-01 | EC-V | https://172.30.30.24 | ssh admin@172.30.30.24 |
+| SFO-ECV-01 | EC-V | https://172.30.30.25 | ssh admin@172.30.30.25 |
+| LAS-ECV-01 | EC-V | https://172.30.30.26 | ssh admin@172.30.30.26 |
+| SEA-vCX-01 | AOS-CX | https://172.30.30.34 | ssh admin@172.30.30.34 |
+| SFO-vCX-01 | AOS-CX | https://172.30.30.35 | ssh admin@172.30.30.35 |
+| LAS-vCX-01 | AOS-CX | https://172.30.30.36 | ssh admin@172.30.30.36 |
+| internet | Linux | N/A | docker exec -it clab-sea-sfo-las_ec-cx-internet bash |
+| mpls | Linux | N/A | docker exec -it clab-sea-sfo-las_ec-cx-mpls bash |
 
 Default credentials: `admin` / `admin`
 
-### 6. Tear Down
+### 7. Tear Down
 
 ```bash
-sudo clab destroy -t examples/topology.clab.yml --cleanup
+# Destroy a single topology
+./scripts/destroy.sh chi-stl-dfw
+./scripts/destroy.sh sea-sfo-las
+
+# Or destroy both
+./scripts/destroy.sh all
 ```
 
 ## Configuration
@@ -245,7 +319,54 @@ sudo clab destroy -t examples/topology.clab.yml --cleanup
 | `ECOS_ADMIN_PASSWORD` | Admin password | EC-V |
 | `ECOS_REGISTRATION_KEY` | Portal registration key | EC-V |
 | `ECOS_ACCOUNT_NAME` | Portal account name | EC-V |
+| `ECOS_PORTAL_HOSTNAME` | Portal hostname | EC-V |
 | `AOSCX_ADMIN_PASSWORD` | Admin password | AOS-CX |
+
+### AOS-CX Startup Configurations
+
+Each vCX switch has a startup config in `configs/` that is pushed via SSH during deployment. The configurations include:
+
+- **VRFs**: CSN_Managed, CSN_Unmanaged, CSN_Guest with per-VRF route-distinguishers and EVPN route-targets
+- **OSPF** (area 0): LAN-facing interface for underlay reachability to EC-V loopbacks
+- **BGP** (AS 65001): eBGP multihop peering to EC-V (AS 64001) with L2VPN EVPN address-family
+- **VXLAN**: L2 VNIs (1010, 1011, 1012) bridging VLANs across sites, L3 VNIs (10010, 10011, 10012) for inter-VRF routing
+- **VLANs and SVIs**: VLAN 1010 (Managed), 1011 (Unmanaged), 1012 (Guest) with /24 subnets
+- **Access ports**: 1/1/2 (Managed), 1/1/3 (Unmanaged), 1/1/4 (Guest) for test clients
+- **DHCP servers**: Per-VRF pools serving test clients
+
+**Per-site IP addressing:**
+
+| Site | Loopback | LAN (1/1/1) | Managed SVI | Unmanaged SVI | Guest SVI |
+|------|----------|-------------|-------------|---------------|-----------|
+| DFW | 198.18.1.1/32 | 10.1.0.1/31 | 192.168.10.1/24 | 192.168.11.1/24 | 192.168.12.1/24 |
+| STL | 198.18.2.1/32 | 10.2.0.1/31 | 192.168.20.1/24 | 192.168.21.1/24 | 192.168.22.1/24 |
+| CHI | 198.18.3.1/32 | 10.3.0.1/31 | 192.168.30.1/24 | 192.168.31.1/24 | 192.168.32.1/24 |
+| SEA | 198.18.4.1/32 | 10.4.0.1/31 | 192.168.40.1/24 | 192.168.41.1/24 | 192.168.42.1/24 |
+| SFO | 198.18.5.1/32 | 10.5.0.1/31 | 192.168.50.1/24 | 192.168.51.1/24 | 192.168.52.1/24 |
+| LAS | 198.18.6.1/32 | 10.6.0.1/31 | 192.168.60.1/24 | 192.168.61.1/24 | 192.168.62.1/24 |
+
+### EdgeConnect Preconfigurations
+
+YAML preconfigurations for each EC-V are in `preconfig/`. These files are formatted for import into Orchestrator to provision the appliances and include:
+
+- Appliance info (hostname, group, site, location)
+- Template groups (Default, VXLAN)
+- Business intent overlays (RealTime, CriticalApps, BulkApps, DefaultOverlay, CSN_LBO, CSN_SSE)
+- Deployment mode (inline-router) with interface definitions (lan0, wan0, wan1)
+- OSPF configuration per segment
+- BGP configuration (AS 64001) with EVPN peering to vCX (AS 65001)
+- Per-segment BGP route-targets for CSN_Managed, CSN_Unmanaged, CSN_Guest
+- Segment local routes for internet breakout
+- VXLAN configuration (UDP 4789, VTEP source on lo0)
+
+### Transport Nodes
+
+Each topology has two Linux transport nodes simulating WAN circuits:
+
+- **internet**: Provides DHCP (dnsmasq) on 192.168.x.0/24 ranges, NAT via iptables, and IP forwarding
+- **mpls**: Provides DHCP (dnsmasq) on 10.100.x.0/24 ranges with IP forwarding
+
+DNSMasq configurations are in `configs/` with separate files per topology to avoid IP conflicts.
 
 ### Interface Mapping
 
@@ -254,19 +375,21 @@ sudo clab destroy -t examples/topology.clab.yml --cleanup
 | Container Interface | VM Interface | Purpose |
 |---------------------|--------------|---------|
 | eth0 | mgmt0 | Management (DHCP) |
-| eth1 | wan0 | Primary WAN |
-| eth2 | lan0 | Primary LAN |
-| eth3 | wan1 | Secondary WAN |
-| eth4 | lan1 | Secondary LAN |
+| eth1 | wan0 | Primary WAN (internet) |
+| eth2 | lan0 | Primary LAN (to vCX 1/1/1) |
+| eth3 | wan1 | Secondary WAN (MPLS) |
+| eth4 | lan1 | Secondary LAN (unused) |
+| eth5 | ha | High availability (unused) |
 
 **AOS-CX:**
 
 | Container Interface | VM Interface | Purpose |
 |---------------------|--------------|---------|
 | eth0 | OOBM | Management |
-| eth1 | 1/1/1 | Data port |
-| eth2 | 1/1/2 | Data port |
-| eth3+ | 1/1/3+ | Data ports |
+| eth1 | 1/1/1 | LAN uplink to EC-V |
+| eth2 | 1/1/2 | Managed client access (VLAN 1010) |
+| eth3 | 1/1/3 | Unmanaged client access (VLAN 1011) |
+| eth4 | 1/1/4 | Guest client access (VLAN 1012) |
 
 ## Troubleshooting
 
@@ -291,7 +414,7 @@ If your EdgeConnect devices show literal variable names (e.g., `$ECOS_ACCOUNT_NA
 
 ```bash
 # Destroy the lab
-sudo clab destroy -t examples/topology.clab.yml
+./scripts/destroy.sh all
 
 # Source environment variables
 source .env
@@ -299,8 +422,8 @@ source .env
 # Verify variables are set
 echo $ECOS_ACCOUNT_NAME
 
-# Redeploy with -E flag to preserve environment
-sudo -E clab deploy -t examples/topology.clab.yml
+# Redeploy
+./scripts/deploy.sh all
 ```
 
 ### AOS-CX Not Booting
@@ -309,10 +432,10 @@ AOS-CX requires 8GB RAM per instance. Check available memory and container resou
 ```bash
 free -h
 docker stats --no-stream
-docker logs clab-ecos-aoscx-DFW-vCX-01
+docker logs clab-chi-stl-dfw_ec-cx-DFW-vCX-01
 ```
 
-If running on a VM, ensure you have at least 40GB RAM for the full topology.
+If running on a VM, ensure you have at least 40GB RAM per topology.
 
 ### KVM Permission Denied
 
@@ -328,7 +451,7 @@ sudo usermod -aG kvm $USER
 docker ps --format "table {{.Names}}\t{{.Status}}"
 
 # Detailed health check
-docker inspect --format='{{.State.Health.Status}}' clab-ecos-aoscx-DFW-ECV-01
+docker inspect --format='{{.State.Health.Status}}' clab-chi-stl-dfw_ec-cx-DFW-ECV-01
 ```
 
 ### EC-Vs Not Showing Up in Orchestrator
@@ -351,10 +474,10 @@ done
 If the variables are missing or contain literal `$` references, destroy and redeploy with the correct environment:
 
 ```bash
-sudo clab destroy -t examples/topology.clab.yml --cleanup
+./scripts/destroy.sh chi-stl-dfw
 source .env
 echo $ECOS_ACCOUNT_NAME   # verify it's set
-sudo -E clab deploy -t examples/topology.clab.yml
+./scripts/deploy.sh chi-stl-dfw
 ```
 
 ### Performance Problems / Tunnels Not Coming Up or Unstable
@@ -380,7 +503,7 @@ iostat -x 1 3
 dmesg | grep -i "oom\|killed process" | tail -10
 ```
 
-Each EC-V requires ~4GB RAM and each AOS-CX requires ~8GB RAM. The full 3-site topology needs approximately 40GB+ total. If the host is under pressure, consider deploying fewer nodes.
+Each EC-V requires ~4GB RAM and each AOS-CX requires ~8GB RAM. A single 3-site topology needs approximately 40GB+ total. Running both topologies simultaneously requires 80GB+. If the host is under pressure, consider deploying only one topology at a time.
 
 ### Not Sure if EC-Vs Have Actually Booted
 
@@ -405,13 +528,29 @@ docker logs -f clab-chi-stl-dfw_ec-cx-DFW-ECV-01
 
 If QEMU is not running, check for KVM/permission issues. If QEMU is running but no login prompt is detected, the VM may still be booting or may have failed during startup — check the full logs for errors.
 
+### Config Push Failures
+
+If the deploy script fails to push configs to AOS-CX switches:
+
+```bash
+# Verify SSH is reachable
+ssh-keyscan 172.30.30.31
+
+# Test SSH manually
+sshpass -p admin ssh -o StrictHostKeyChecking=no admin@172.30.30.31
+
+# Check the deploy script output for specific errors
+# The script will try the configured AOSCX_ADMIN_PASSWORD first,
+# then fall back to the default admin/admin password
+```
+
 ### Clean Restart
 
 ```bash
-sudo clab destroy -t examples/topology.clab.yml --cleanup
+./scripts/destroy.sh all
 docker rm -f $(docker ps -aq --filter name=clab)
 source .env
-sudo -E clab deploy -t examples/topology.clab.yml
+./scripts/deploy.sh all
 ```
 
 ## Directory Structure
@@ -419,43 +558,38 @@ sudo -E clab deploy -t examples/topology.clab.yml
 ```
 clab-ecos-aoscx/
 ├── README.md
-├── env.example
+├── env.example                              # Environment variable template
 ├── .gitignore
-├── topology.png
-├── configs/              # Device startup configurations
-│   ├── CHI-vCX-01.cfg
+├── topology.png                             # Network diagram
+├── configs/                                 # Device startup configurations
+│   ├── CHI-vCX-01.cfg                       # AOS-CX switch configs (6 total)
 │   ├── DFW-vCX-01.cfg
+│   ├── LAS-vCX-01.cfg
+│   ├── SEA-vCX-01.cfg
+│   ├── SFO-vCX-01.cfg
 │   ├── STL-vCX-01.cfg
-│   ├── internet-dnsmasq.conf
-│   └── mpls-dnsmasq.conf
-├── ecos/                 # Copy to vrnetlab/aruba/ecos/
+│   ├── chi-stl-dfw-internet-dnsmasq.conf    # DNSMasq DHCP configs (4 total)
+│   ├── chi-stl-dfw-mpls-dnsmasq.conf
+│   ├── sea-sfo-las-internet-dnsmasq.conf
+│   └── sea-sfo-las-mpls-dnsmasq.conf
+├── ecos/                                    # EdgeConnect custom vrnetlab node type
 │   ├── Makefile
-│   ├── README.md
 │   └── docker/
 │       ├── Dockerfile
 │       └── launch.py
-└── examples/
-    └── topology.clab.yml
-```
-
-After setup, your vrnetlab directory should look like:
-```
-vrnetlab/
-├── aruba/
-│   ├── aoscx/            # Already exists in vrnetlab
-│   │   ├── Makefile
-│   │   ├── README.md
-│   │   ├── docker/
-│   │   │   ├── Dockerfile
-│   │   │   └── launch.py
-│   │   └── arubaoscx-*.vmdk  # Your vendor image (from HPE)
-│   └── ecos/             # From ecos/ (custom node type)
-│       ├── Makefile
-│       ├── docker/
-│       │   ├── Dockerfile
-│       │   └── launch.py
-│       └── ECV-*.qcow2   # Your vendor image (from HPE)
-└── ... (other vrnetlab node types)
+├── examples/                                # ContainerLab topology definitions
+│   ├── CHI-STL-DFW_topology.clab.yml
+│   └── SEA-SFO-LAS_topology.clab.yml
+├── preconfig/                               # EC-V Orchestrator preconfigurations
+│   ├── CHI-ECV-01.yml
+│   ├── DFW-ECV-01.yml
+│   ├── LAS-ECV-01.yml
+│   ├── SEA-ECV-01.yml
+│   ├── SFO-ECV-01.yml
+│   └── STL-ECV-01.yml
+└── scripts/                                 # Deployment automation
+    ├── deploy.sh                            # Deploy topology + push configs
+    └── destroy.sh                           # Tear down topology
 ```
 
 ## Security Considerations
@@ -467,6 +601,7 @@ This lab is designed for **isolated testing and development environments only**.
 - **Environment Variables**: Credentials passed via environment variables may be visible in process listings. Use appropriate access controls on the host system
 - **Network Isolation**: The management network (172.30.30.0/24) should not be exposed to untrusted networks
 - **Console Access**: Initial device configuration is applied via console (telnet to QEMU). This occurs within the container and is not exposed externally
+- **SSH Config Push**: The deploy script uses sshpass with `StrictHostKeyChecking=no` for automated config push. This is acceptable in an isolated lab but should not be used in production
 - **Lab Environment Only**: This topology is intended for lab, testing, and educational purposes. Do not use default configurations in production environments
 
 ## Useful Resources
