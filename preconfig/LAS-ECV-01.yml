@@ -248,3 +248,53 @@ vxlan:
   destinationUdpPort: 4789
   vtepSrcInterface: lo0
 # end of vxlan configuration
+
+# DHCP address pool configuration
+dhcpRemoteAddressPoolConfig:
+  dhcpAddressMask: 192.168.60.0/24
+  scopeName: CSN_Managed
+  ipRange:
+    - ipStart: 192.168.60.11
+      ipEnd: 192.168.60.25
+  gatewayIp: 192.168.60.1
+  dnsServers:
+    - 8.8.8.8
+    - 8.8.4.4
+  maxLeaseTime: 43200
+  defaultLeaseTime: 43200
+  options:
+    - option: 1
+      value: 255.255.255.0
+
+dhcpRemoteAddressPoolConfig:
+  dhcpAddressMask: 192.168.61.0/24
+  scopeName: CSN_Unmanaged
+  ipRange:
+    - ipStart: 192.168.61.11
+      ipEnd: 192.168.61.25
+  gatewayIp: 192.168.61.1
+  dnsServers:
+    - 8.8.8.8
+    - 8.8.4.4
+  maxLeaseTime: 43200
+  defaultLeaseTime: 43200
+  options:
+    - option: 1
+      value: 255.255.255.0
+
+dhcpRemoteAddressPoolConfig:
+  dhcpAddressMask: 192.168.62.0/24
+  scopeName: CSN_Guest
+  ipRange:
+    - ipStart: 192.168.62.11
+      ipEnd: 192.168.62.25
+  gatewayIp: 192.168.62.1
+  dnsServers:
+    - 8.8.8.8
+    - 8.8.4.4
+  maxLeaseTime: 43200
+  defaultLeaseTime: 43200
+  options:
+    - option: 1
+      value: 255.255.255.0
+# end of DHCP address pool configuration
