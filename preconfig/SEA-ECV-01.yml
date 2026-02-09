@@ -52,7 +52,7 @@ deploymentInfo:
     - interfaceName: lan0
       interfaceType: lan
       interfaceComment: "to SEA-vCX-01 1/1/1"
-      ipAddressMask: 10.4.0.0/31
+      ipAddressMask: 10.4.0.2/30
       nextHop:
       segment: Default
       zone: Default
@@ -83,6 +83,14 @@ deploymentInfo:
       segment: Default
       zone: Default
       role: default
+
+  dhcpInfo:
+    - dhcpInterfaceName: lan0
+      dhcpType: server
+      dhcpAddressMask: 10.4.0.0/30
+      gatewayIpAddress: 10.4.0.2
+      startIpAddress: 10.4.0.1
+      endIpAddress: 10.4.0.2
 # end of deployment info
 
 # loopback configuration
@@ -248,3 +256,53 @@ vxlan:
   destinationUdpPort: 4789
   vtepSrcInterface: lo0
 # end of vxlan configuration
+
+# DHCP address pool configuration
+dhcpRemoteAddressPoolConfig:
+  dhcpAddressMask: 192.168.40.0/24
+  scopeName: CSN_Managed
+  ipRange:
+    - ipStart: 192.168.40.11
+      ipEnd: 192.168.40.25
+  gatewayIp: 192.168.40.1
+  dnsServers:
+    - 8.8.8.8
+    - 8.8.4.4
+  maxLeaseTime: 43200
+  defaultLeaseTime: 43200
+  options:
+    - option: 1
+      value: 255.255.255.0
+
+dhcpRemoteAddressPoolConfig:
+  dhcpAddressMask: 192.168.41.0/24
+  scopeName: CSN_Unmanaged
+  ipRange:
+    - ipStart: 192.168.41.11
+      ipEnd: 192.168.41.25
+  gatewayIp: 192.168.41.1
+  dnsServers:
+    - 8.8.8.8
+    - 8.8.4.4
+  maxLeaseTime: 43200
+  defaultLeaseTime: 43200
+  options:
+    - option: 1
+      value: 255.255.255.0
+
+dhcpRemoteAddressPoolConfig:
+  dhcpAddressMask: 192.168.42.0/24
+  scopeName: CSN_Guest
+  ipRange:
+    - ipStart: 192.168.42.11
+      ipEnd: 192.168.42.25
+  gatewayIp: 192.168.42.1
+  dnsServers:
+    - 8.8.8.8
+    - 8.8.4.4
+  maxLeaseTime: 43200
+  defaultLeaseTime: 43200
+  options:
+    - option: 1
+      value: 255.255.255.0
+# end of DHCP address pool configuration
