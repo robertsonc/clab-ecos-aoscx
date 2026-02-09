@@ -83,6 +83,14 @@ deploymentInfo:
       segment: Default
       zone: Default
       role: default
+
+  dhcpInfo:
+    - dhcpInterfaceName: lan0
+      dhcpType: server
+      dhcpAddressMask: 10.5.0.0/31
+      gatewayIpAddress: 10.5.0.0
+      startIpAddress: 10.5.0.0
+      endIpAddress: 10.5.0.1
 # end of deployment info
 
 # loopback configuration
