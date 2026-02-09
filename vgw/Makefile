@@ -11,19 +11,15 @@ VERSION=$(shell echo $(IMAGE) | sed -e 's/ArubaOS_VGW_\(.*\)\.ova/\1/' | sed -e 
 -include ../../makefile.include
 
 # Override docker-build-image-copy from makefile.include:
-# The VGW OVA contains two VMDKs that must be extracted and converted to
-# qcow2 before the Docker build. The default `cp $(IMAGE)* docker/` won't
-# work because the Dockerfile expects disk1.qcow2 and disk2.qcow2.
+# The VGW OVA contains two VMDKs that need to be extracted and placed into
+# the docker build context. The VMDK-to-qcow2 conversion happens inside the
+# Dockerfile where qemu-img is guaranteed to be available.
 docker-build-image-copy:
 	@echo "==> Extracting VMDKs from $(IMAGE)..."
 	tar xf $(IMAGE) --wildcards '*.vmdk'
-	@echo "==> Converting disk1 VMDK to qcow2..."
-	qemu-img convert -p -f vmdk -O qcow2 \
-		$$(ls -1 *-disk1.vmdk 2>/dev/null | head -1) docker/disk1.qcow2
-	@echo "==> Converting disk2 VMDK to qcow2..."
-	qemu-img convert -p -f vmdk -O qcow2 \
-		$$(ls -1 *-disk2.vmdk 2>/dev/null | head -1) docker/disk2.qcow2
-	rm -f *.vmdk *.ovf *.mf *.cert
+	mv $$(ls -1 *-disk1.vmdk 2>/dev/null | head -1) docker/disk1.vmdk
+	mv $$(ls -1 *-disk2.vmdk 2>/dev/null | head -1) docker/disk2.vmdk
+	rm -f *.ovf *.mf *.cert
 
 # If the common makefile.include wasn't found, define our own targets
 ifeq ($(origin docker-build),undefined)
@@ -46,12 +42,12 @@ docker-build:
 	@echo "Building $(DOCKER_IMAGE) from $(OVA)"
 	$(MAKE) IMAGE=$(OVA) docker-build-image-copy
 	(cd docker && docker build -t $(DOCKER_IMAGE) .)
-	rm -f docker/disk1.qcow2 docker/disk2.qcow2
+	rm -f docker/disk1.vmdk docker/disk2.vmdk docker/disk1.qcow2 docker/disk2.qcow2
 
 clean: docker-clean
 
 docker-clean:
-	rm -f docker/*.qcow2 docker/*.vmdk
+	rm -f docker/*.qcow2 docker/*.vmdk docker/*.ovf docker/*.mf
 	-docker rmi $(DOCKER_IMAGE) 2>/dev/null || true
 
 endif

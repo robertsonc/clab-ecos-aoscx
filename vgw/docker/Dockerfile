@@ -4,11 +4,18 @@ RUN apt-get update -qy \
     && apt-get install -y --no-install-recommends \
     python3 \
     genisoimage \
+    qemu-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# The Makefile pre-converts the OVA's two VMDKs into disk1.qcow2 and disk2.qcow2
-COPY disk1.qcow2 /
-COPY disk2.qcow2 /
+# The Makefile extracts the two VMDKs from the OVA into the build context.
+# Convert them to qcow2 here where qemu-img is available, then remove the
+# VMDKs to keep the final image small.
+COPY disk1.vmdk /tmp/disk1.vmdk
+COPY disk2.vmdk /tmp/disk2.vmdk
+RUN qemu-img convert -f vmdk -O qcow2 /tmp/disk1.vmdk /disk1.qcow2 \
+    && qemu-img convert -f vmdk -O qcow2 /tmp/disk2.vmdk /disk2.qcow2 \
+    && rm -f /tmp/disk1.vmdk /tmp/disk2.vmdk
+
 COPY *.py /
 RUN chmod +x /launch.py
 
