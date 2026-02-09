@@ -52,7 +52,7 @@ deploymentInfo:
     - interfaceName: lan0
       interfaceType: lan
       interfaceComment: "to DFW-vCX-01 1/1/1"
-      ipAddressMask: 10.1.0.0/31
+      ipAddressMask: 10.1.0.2/30
       nextHop:
       segment: Default
       zone: Default
@@ -87,10 +87,10 @@ deploymentInfo:
   dhcpInfo:
     - dhcpInterfaceName: lan0
       dhcpType: server
-      dhcpAddressMask: 10.1.0.0/31
-      gatewayIpAddress: 10.1.0.0
-      startIpAddress: 10.1.0.0
-      endIpAddress: 10.1.0.1
+      dhcpAddressMask: 10.1.0.0/30
+      gatewayIpAddress: 10.1.0.2
+      startIpAddress: 10.1.0.1
+      endIpAddress: 10.1.0.2
 # end of deployment info
 
 # loopback configuration
