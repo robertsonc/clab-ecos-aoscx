@@ -1,0 +1,27 @@
+# VGW Test Topology
+#
+# Minimal topology for testing a single Aruba Virtual Gateway (VGW).
+# The VGW boots with a pre-built user-data ISO from Aruba Central.
+#
+# NIC mapping (vrnetlab):
+#   eth0 - mgmt
+#   eth1 - GE0/0/0
+#   eth2 - GE0/0/1
+#   eth3 - GE0/0/2
+
+name: vgw-test
+
+mgmt:
+  network: clab-mgmt
+  ipv4-subnet: 172.30.30.0/24
+
+topology:
+  nodes:
+    VGW-01:
+      kind: generic_vm
+      image: vrnetlab/aruba_vgw:10.8.0.0_94533
+      mgmt-ipv4: 172.30.30.40
+      binds:
+        - ../vgw/VG2602093387-UserData.iso:/user-data.iso:ro
+
+  links: []
