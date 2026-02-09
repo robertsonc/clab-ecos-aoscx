@@ -3,6 +3,7 @@
 *.vmdk
 *.ova
 *.ovf
+*.iso
 
 # Environment files with credentials
 .env
