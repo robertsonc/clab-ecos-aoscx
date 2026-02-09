@@ -7,14 +7,8 @@ RUN apt-get update -qy \
     qemu-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# The Makefile extracts the two VMDKs from the OVA into the build context.
-# Convert them to qcow2 here where qemu-img is available, then remove the
-# VMDKs to keep the final image small.
-COPY disk1.vmdk /tmp/disk1.vmdk
-COPY disk2.vmdk /tmp/disk2.vmdk
-RUN qemu-img convert -f vmdk -O qcow2 /tmp/disk1.vmdk /disk1.qcow2 \
-    && qemu-img convert -f vmdk -O qcow2 /tmp/disk2.vmdk /disk2.qcow2 \
-    && rm -f /tmp/disk1.vmdk /tmp/disk2.vmdk
+COPY disk1.qcow2 /disk1.qcow2
+COPY disk2.qcow2 /disk2.qcow2
 
 COPY *.py /
 RUN chmod +x /launch.py
