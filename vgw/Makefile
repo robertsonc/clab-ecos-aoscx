@@ -4,7 +4,9 @@ IMAGE_FORMAT=ova
 IMAGE_GLOB=*.ova
 
 # Extract version from filename like ArubaOS_VGW_10.8.0.0_94533.ova -> 10.8.0.0_94533
-VERSION=$(shell echo $(IMAGE) | sed -e 's/ArubaOS_VGW_\(.*\)\.ova/\1/' | sed -e 's/arubaos_vgw_\(.*\)\.ova/\1/')
+# Use IMAGE if set (recursive make), otherwise fall back to the OVA found on disk
+_VERSION_SRC=$(if $(IMAGE),$(IMAGE),$(shell ls -1 *.ova 2>/dev/null | head -1))
+VERSION=$(shell echo $(_VERSION_SRC) | sed -e 's/ArubaOS_VGW_\(.*\)\.ova/\1/' | sed -e 's/arubaos_vgw_\(.*\)\.ova/\1/')
 
 # Try to include vrnetlab common makefiles, but don't fail if they don't exist
 -include ../../makefile-sanity.include

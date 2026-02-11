@@ -84,13 +84,6 @@ deploymentInfo:
       zone: Default
       role: default
 
-  dhcpInfo:
-    - dhcpInterfaceName: lan0
-      dhcpType: server
-      dhcpAddressMask: 10.3.0.0/30
-      gatewayIpAddress: 10.3.0.2
-      startIpAddress: 10.3.0.1
-      endIpAddress: 10.3.0.2
 # end of deployment info
 
 # loopback configuration
@@ -257,52 +250,3 @@ vxlan:
   vtepSrcInterface: lo0
 # end of vxlan configuration
 
-# DHCP address pool configuration
-dhcpRemoteAddressPoolConfig:
-  dhcpAddressMask: 192.168.30.0/24
-  scopeName: CSN_Managed
-  ipRange:
-    - ipStart: 192.168.30.11
-      ipEnd: 192.168.30.25
-  gatewayIp: 192.168.30.1
-  dnsServers:
-    - 8.8.8.8
-    - 8.8.4.4
-  maxLeaseTime: 43200
-  defaultLeaseTime: 43200
-  options:
-    - option: 1
-      value: 255.255.255.0
-
-dhcpRemoteAddressPoolConfig:
-  dhcpAddressMask: 192.168.31.0/24
-  scopeName: CSN_Unmanaged
-  ipRange:
-    - ipStart: 192.168.31.11
-      ipEnd: 192.168.31.25
-  gatewayIp: 192.168.31.1
-  dnsServers:
-    - 8.8.8.8
-    - 8.8.4.4
-  maxLeaseTime: 43200
-  defaultLeaseTime: 43200
-  options:
-    - option: 1
-      value: 255.255.255.0
-
-dhcpRemoteAddressPoolConfig:
-  dhcpAddressMask: 192.168.32.0/24
-  scopeName: CSN_Guest
-  ipRange:
-    - ipStart: 192.168.32.11
-      ipEnd: 192.168.32.25
-  gatewayIp: 192.168.32.1
-  dnsServers:
-    - 8.8.8.8
-    - 8.8.4.4
-  maxLeaseTime: 43200
-  defaultLeaseTime: 43200
-  options:
-    - option: 1
-      value: 255.255.255.0
-# end of DHCP address pool configuration

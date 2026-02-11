@@ -13,15 +13,24 @@ name: vgw-test
 
 mgmt:
   network: clab-mgmt
-  ipv4-subnet: 172.30.30.0/24
+  ipv4-subnet: 172.32.40.0/24
 
 topology:
   nodes:
     VGW-01:
       kind: generic_vm
       image: vrnetlab/aruba_vgw:10.8.0.0_94533
-      mgmt-ipv4: 172.30.30.40
+      mgmt-ipv4: 172.32.40.40
+      ports:
+        - "5900:5900/tcp"
       binds:
         - ../vgw/VG2602093387-UserData.iso:/user-data.iso:ro
 
-  links: []
+    stub:
+      kind: linux
+      image: alpine:latest
+
+  links:
+    - endpoints: ["VGW-01:eth1", "stub:eth1"]
+    - endpoints: ["VGW-01:eth2", "stub:eth2"]
+    - endpoints: ["VGW-01:eth3", "stub:eth3"]

@@ -99,6 +99,9 @@ class VGW_vm(vrnetlab.VM):
             "-smp", "cores=3,threads=1,sockets=1",
         ])
 
+        # Enable VNC for VGA console access (port 5900 inside container)
+        self.qemu_args.extend(["-vnc", "0.0.0.0:0"])
+
     def _attach_data_disk(self):
         """Add disk2.qcow2 as a second IDE drive (hdb)."""
         disk2 = "/disk2.qcow2"
