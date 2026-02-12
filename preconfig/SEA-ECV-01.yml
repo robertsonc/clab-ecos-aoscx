@@ -145,7 +145,7 @@ segmentBgpSystems:
     neighbors:
       # IPV6 BGP peers are only supported from ECOS 9.3.0 and above
       - peerIpAddress: 198.18.4.1
-        sourceIpInterface: lo0
+        #sourceIpInterface: lo0
         peerAsn: 65004
         peerType: Branch
         enableNeighbor: true
