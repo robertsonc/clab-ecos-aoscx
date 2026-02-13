@@ -8,11 +8,12 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 declare -A TOPO_FILES=(
     [chi-stl-dfw]="examples/CHI-STL-DFW_topology.clab.yml"
     [sea-sfo-las]="examples/SEA-SFO-LAS_topology.clab.yml"
+    [jfk-rdu-mia]="examples/JFK-RDU-MIA_topology.clab.yml"
 )
 
 # ── Helpers ─────────────────────────────────────────────────────────
 usage() {
-    echo "Usage: $0 <chi-stl-dfw|sea-sfo-las|all>"
+    echo "Usage: $0 <chi-stl-dfw|sea-sfo-las|jfk-rdu-mia|all>"
     exit 1
 }
 
@@ -41,12 +42,12 @@ fi
 
 ARG="${1,,}"  # lowercase
 
-if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-las" && "$ARG" != "all" ]]; then
+if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-las" && "$ARG" != "jfk-rdu-mia" && "$ARG" != "all" ]]; then
     usage
 fi
 
 if [ "$ARG" = "all" ]; then
-    TOPOS=("chi-stl-dfw" "sea-sfo-las")
+    TOPOS=("chi-stl-dfw" "sea-sfo-las" "jfk-rdu-mia")
 else
     TOPOS=("$ARG")
 fi

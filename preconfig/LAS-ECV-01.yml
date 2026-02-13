@@ -58,9 +58,9 @@ deploymentInfo:
       zone: Default
       role: default
     - interfaceName: wan0
-      interfaceLabel: CL_INET
+      interfaceLabel: CL_ISP_A
       interfaceType: wan
-      interfaceComment: internet
+      interfaceComment: isp-a
       ipAddressMask:
       nextHop:
       inboundMaxBandwidth: 200000
@@ -71,9 +71,9 @@ deploymentInfo:
       zone: Default
       role: default
     - interfaceName: wan1
-      interfaceLabel: CL_MPLS
+      interfaceLabel: CL_ISP_B
       interfaceType: wan
-      interfaceComment: mpls
+      interfaceComment: isp-b
       ipAddressMask:
       nextHop:
       inboundMaxBandwidth: 200000

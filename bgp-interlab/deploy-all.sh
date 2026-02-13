@@ -12,12 +12,12 @@
 set -euo pipefail
 
 # ---- EDIT THESE to match your container names ----
-# Use: docker ps --format '{{.Names}}' | grep -i internet
+# Use: docker ps --format '{{.Names}}' | grep -i isp
 # or:  sudo clab inspect -t <your-topo.yml>
-CONTAINER_LAB1_INTERNET=" clab-chi-stl-dfw_ec-cx-internet"
-CONTAINER_LAB1_MPLS=" clab-chi-stl-dfw_ec-cx-mpls"
-CONTAINER_LAB2_INTERNET="clab-sea-sfo-las_ec-cx-internet"
-CONTAINER_LAB2_MPLS="clab-sea-sfo-las_ec-cx-mpls"
+CONTAINER_LAB1_ISP_A="clab-chi-stl-dfw_ec-cx-isp-a"
+CONTAINER_LAB1_ISP_B="clab-chi-stl-dfw_ec-cx-isp-b"
+CONTAINER_LAB2_ISP_A="clab-sea-sfo-las_ec-cx-isp-a"
+CONTAINER_LAB2_ISP_B="clab-sea-sfo-las_ec-cx-isp-b"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -46,16 +46,16 @@ deploy_host() {
     echo "  ✓ $HOST_LABEL complete"
 }
 
-deploy_host "$CONTAINER_LAB1_INTERNET" "lab1-internet" "Lab1 Internet (172.30.30.10 / AS65010)"
-deploy_host "$CONTAINER_LAB1_MPLS"     "lab1-mpls"     "Lab1 MPLS (172.30.30.11 / AS65011)"
-deploy_host "$CONTAINER_LAB2_INTERNET" "lab2-internet" "Lab2 Internet (172.30.30.12 / AS65012)"
-deploy_host "$CONTAINER_LAB2_MPLS"     "lab2-mpls"     "Lab2 MPLS (172.30.30.13 / AS65013)"
+deploy_host "$CONTAINER_LAB1_ISP_A" "lab1-isp-a" "Lab1 ISP-A (172.30.30.10 / AS65010)"
+deploy_host "$CONTAINER_LAB1_ISP_B" "lab1-isp-b" "Lab1 ISP-B (172.30.30.11 / AS65011)"
+deploy_host "$CONTAINER_LAB2_ISP_A" "lab2-isp-a" "Lab2 ISP-A (172.30.30.12 / AS65012)"
+deploy_host "$CONTAINER_LAB2_ISP_B" "lab2-isp-b" "Lab2 ISP-B (172.30.30.13 / AS65013)"
 
 echo ""
 echo "======================================================"
 echo "  All hosts deployed. BGP sessions should come up"
 echo "  within ~30 seconds. Verify with:"
 echo ""
-echo "  docker exec $CONTAINER_LAB1_INTERNET vtysh -c 'show bgp summary'"
-echo "  docker exec $CONTAINER_LAB1_INTERNET vtysh -c 'show ip route bgp'"
+echo "  docker exec $CONTAINER_LAB1_ISP_A vtysh -c 'show bgp summary'"
+echo "  docker exec $CONTAINER_LAB1_ISP_A vtysh -c 'show ip route bgp'"
 echo "======================================================"

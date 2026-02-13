@@ -1,0 +1,197 @@
+# appliance info
+applianceInfo:
+  softwareVersion:
+  hostname: RDU-ECV-01
+  group: CLAB
+  site: CLAB-RDU
+  clusterProfile:
+  networkRole: non-hub
+  region: lab
+  location:
+    address: 2400 John Brantley Blvd
+    address2:
+    city: Raleigh
+    state: North Carolina
+    zipCode: 27560
+    country: US
+    latitude:
+    longitude:
+  contact:
+    name: ContainerLab
+    email:
+    phoneNumber:
+# end of appliance info
+
+# template groups
+templateGroups:
+  groups:
+    - Default Template Group
+# end of template groups
+
+# overlays
+businessIntentOverlays:
+    overlays:
+      - RealTime
+      - CriticalApps
+      - BulkApps
+      - DefaultOverlay
+# end of overlays
+
+# deployment info
+deploymentInfo:
+  deploymentMode: inline-router
+  totalOutboundBandwidth: 600000
+  totalInboundBandwidth: 600000
+  passThroughShapedTraffic:
+    outboundMaxBandwidth: 10000000
+
+  deploymentInterfaces:
+    - interfaceName: lan0
+      interfaceType: lan
+      interfaceComment: "CSN_Managed clients"
+      ipAddressMask: 192.168.80.1/24
+      nextHop:
+      segment: CSN_Managed
+      zone: Default
+      role: MANAGED
+    - interfaceName: lan1
+      interfaceType: lan
+      interfaceComment: "CSN_Unmanaged clients"
+      ipAddressMask: 192.168.81.1/24
+      nextHop:
+      segment: CSN_Unmanaged
+      zone: Default
+      role: UNMANAGED
+    - interfaceName: lan2
+      interfaceType: lan
+      interfaceComment: "CSN_Guest clients"
+      ipAddressMask: 192.168.82.1/24
+      nextHop:
+      segment: CSN_Guest
+      zone: Default
+      role: GUEST
+    - interfaceName: wan0
+      interfaceLabel: CL_ISP_A
+      interfaceType: wan
+      interfaceComment: isp-a
+      ipAddressMask:
+      nextHop:
+      inboundMaxBandwidth: 200000
+      outboundMaxBandwidth: 200000
+      firewallMode: statefulSNAT
+      behindNat: none
+      segment: Default
+      zone: Default
+      role: default
+    - interfaceName: wan1
+      interfaceLabel: CL_ISP_B
+      interfaceType: wan
+      interfaceComment: isp-b
+      ipAddressMask:
+      nextHop:
+      inboundMaxBandwidth: 200000
+      outboundMaxBandwidth: 200000
+      firewallMode: All
+      behindNat: none
+      segment: Default
+      zone: Default
+      role: default
+
+# end of deployment info
+
+# loopback configuration
+loopbackInterface:
+  loopbacks:
+    - interfaceId: lo0
+      adminStatus: Up
+      ipAddressMask: 198.19.0.8/32
+      interfaceLabel:
+      zone: Default
+      role: default
+      segment: Default
+# end of loopback configuration
+
+# segment local routes
+segmentLocalRoutes:
+  - segment: CSN_Managed
+    routes:
+      - routeIpSubnet: 0.0.0.0/0
+        nextHop:
+        interfaceName:
+        metric: 50
+        advertise: true
+        advertiseToBgp: false
+        advertiseToOspf: false
+        tag: ANY
+        zone:
+        comment: Default for CSN_Managed
+        routeLabel: Internet
+  - segment: CSN_Unmanaged
+    routes:
+      - routeIpSubnet: 0.0.0.0/0
+        nextHop:
+        interfaceName:
+        metric: 50
+        advertise: true
+        advertiseToBgp: false
+        advertiseToOspf: false
+        tag: ANY
+        zone:
+        comment: Default for CSN_Unmanaged
+        routeLabel: Internet
+  - segment: CSN_Guest
+    routes:
+      - routeIpSubnet: 0.0.0.0/0
+        nextHop:
+        interfaceName:
+        metric: 50
+        advertise: true
+        advertiseToBgp: false
+        advertiseToOspf: false
+        tag: ANY
+        zone:
+        comment: Default for CSN_Guest
+        routeLabel: Internet
+# end of segment local routes
+
+# dhcp pool for CSN_Managed
+dhcpRemoteAddressPoolConfig:
+  segment: CSN_Managed
+  interfaceName: lan0
+  dhcpEnabled: true
+  startingIpAddress: 192.168.80.100
+  endingIpAddress: 192.168.80.200
+  subnetMask: 255.255.255.0
+  defaultGateway: 192.168.80.1
+  primaryDnsServer: 8.8.8.8
+  secondaryDnsServer: 8.8.4.4
+  domainName:
+  leaseTime: 86400
+
+# dhcp pool for CSN_Unmanaged
+dhcpRemoteAddressPoolConfig:
+  segment: CSN_Unmanaged
+  interfaceName: lan1
+  dhcpEnabled: true
+  startingIpAddress: 192.168.81.100
+  endingIpAddress: 192.168.81.200
+  subnetMask: 255.255.255.0
+  defaultGateway: 192.168.81.1
+  primaryDnsServer: 8.8.8.8
+  secondaryDnsServer: 8.8.4.4
+  domainName:
+  leaseTime: 86400
+
+# dhcp pool for CSN_Guest
+dhcpRemoteAddressPoolConfig:
+  segment: CSN_Guest
+  interfaceName: lan2
+  dhcpEnabled: true
+  startingIpAddress: 192.168.82.100
+  endingIpAddress: 192.168.82.200
+  subnetMask: 255.255.255.0
+  defaultGateway: 192.168.82.1
+  primaryDnsServer: 8.8.8.8
+  secondaryDnsServer: 8.8.4.4
+  domainName:
+  leaseTime: 86400

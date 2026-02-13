@@ -8,24 +8,28 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 declare -A TOPO_FILES=(
     [chi-stl-dfw]="examples/CHI-STL-DFW_topology.clab.yml"
     [sea-sfo-las]="examples/SEA-SFO-LAS_topology.clab.yml"
+    [jfk-rdu-mia]="examples/JFK-RDU-MIA_topology.clab.yml"
 )
 
 # Each topology's switches: "name:ip:config ..."
 declare -A TOPO_SWITCHES=(
     [chi-stl-dfw]="DFW-vCX-01:172.30.30.31:configs/DFW-vCX-01.cfg STL-vCX-01:172.30.30.32:configs/STL-vCX-01.cfg CHI-vCX-01:172.30.30.33:configs/CHI-vCX-01.cfg"
     [sea-sfo-las]="SEA-vCX-01:172.30.30.34:configs/SEA-vCX-01.cfg SFO-vCX-01:172.30.30.35:configs/SFO-vCX-01.cfg LAS-vCX-01:172.30.30.36:configs/LAS-vCX-01.cfg"
+    [jfk-rdu-mia]=""
 )
 
 # Clab container prefix per topology
 declare -A TOPO_CLAB_PREFIX=(
     [chi-stl-dfw]="clab-chi-stl-dfw_ec-cx"
     [sea-sfo-las]="clab-sea-sfo-las_ec-cx"
+    [jfk-rdu-mia]="clab-jfk-rdu-mia_ec"
 )
 
 # Each topology's test clients (container node names)
 declare -A TOPO_CLIENTS=(
     [chi-stl-dfw]="DFW-client-managed DFW-client-unmanaged DFW-client-guest STL-client-managed STL-client-unmanaged STL-client-guest CHI-client-managed CHI-client-unmanaged CHI-client-guest"
     [sea-sfo-las]="SEA-client-managed SEA-client-unmanaged SEA-client-guest SFO-client-managed SFO-client-unmanaged SFO-client-guest LAS-client-managed LAS-client-unmanaged LAS-client-guest"
+    [jfk-rdu-mia]="JFK-client-managed JFK-client-unmanaged JFK-client-guest RDU-client-managed RDU-client-unmanaged RDU-client-guest MIA-client-managed MIA-client-unmanaged MIA-client-guest"
 )
 
 SSH_OPTS="-T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10"
@@ -34,7 +38,7 @@ SSH_POLL=10      # poll interval in seconds
 
 # ── Helpers ─────────────────────────────────────────────────────────
 usage() {
-    echo "Usage: $0 <chi-stl-dfw|sea-sfo-las|all>"
+    echo "Usage: $0 <chi-stl-dfw|sea-sfo-las|jfk-rdu-mia|all>"
     exit 1
 }
 
@@ -130,22 +134,26 @@ deploy_topology() {
     sudo -E clab deploy -t "$topo_path"
     log "Topology deployed successfully"
 
-    log "Waiting for vCX switches to boot and pushing configs..."
     local switches="${TOPO_SWITCHES[$topo]}"
-    local failed=0
-    for entry in $switches; do
-        IFS=: read -r name ip cfg <<< "$entry"
-        wait_for_ssh "$ip" "$name" || { failed=$((failed + 1)); continue; }
-        push_config "$name" "$ip" "$cfg" || { failed=$((failed + 1)); continue; }
-    done
-    local total
-    total=$(echo "$switches" | wc -w)
-    if [ "$failed" -eq "$total" ]; then
-        err "All switch config pushes failed in $topo — skipping DHCP renewal"
-        return 1
-    fi
-    if [ "$failed" -gt 0 ]; then
-        err "$failed switch(es) failed config push in $topo"
+    if [ -n "$switches" ]; then
+        log "Waiting for vCX switches to boot and pushing configs..."
+        local failed=0
+        for entry in $switches; do
+            IFS=: read -r name ip cfg <<< "$entry"
+            wait_for_ssh "$ip" "$name" || { failed=$((failed + 1)); continue; }
+            push_config "$name" "$ip" "$cfg" || { failed=$((failed + 1)); continue; }
+        done
+        local total
+        total=$(echo "$switches" | wc -w)
+        if [ "$failed" -eq "$total" ]; then
+            err "All switch config pushes failed in $topo — skipping DHCP renewal"
+            return 1
+        fi
+        if [ "$failed" -gt 0 ]; then
+            err "$failed switch(es) failed config push in $topo"
+        fi
+    else
+        log "No switches in this topology, skipping config push"
     fi
 
     renew_client_dhcp "$topo"
@@ -158,7 +166,7 @@ fi
 
 ARG="${1,,}"  # lowercase
 
-if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-las" && "$ARG" != "all" ]]; then
+if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-las" && "$ARG" != "jfk-rdu-mia" && "$ARG" != "all" ]]; then
     usage
 fi
 
@@ -168,28 +176,40 @@ if [ -f "$REPO_ROOT/.env" ]; then
     source "$REPO_ROOT/.env"
 fi
 
-if ! command -v sshpass &>/dev/null; then
-    err "sshpass is required but not installed."
-    echo "  Install with: sudo apt install sshpass"
-    exit 1
-fi
-
-if [ -z "${AOSCX_ADMIN_PASSWORD:-}" ]; then
-    err "AOSCX_ADMIN_PASSWORD is not set."
-    echo "  Set it in .env or export it before running this script."
-    exit 1
-fi
-
-# ── Main ────────────────────────────────────────────────────────────
+# Build list of topologies to deploy
 if [ "$ARG" = "all" ]; then
-    TOPOS=("chi-stl-dfw" "sea-sfo-las")
+    TOPOS=("chi-stl-dfw" "sea-sfo-las" "jfk-rdu-mia")
 else
     TOPOS=("$ARG")
 fi
 
+# Only require sshpass and AOSCX_ADMIN_PASSWORD for topologies with switches
+needs_switches=false
+for topo in "${TOPOS[@]}"; do
+    if [ -n "${TOPO_SWITCHES[$topo]}" ]; then
+        needs_switches=true
+        break
+    fi
+done
+
+if [ "$needs_switches" = true ]; then
+    if ! command -v sshpass &>/dev/null; then
+        err "sshpass is required but not installed."
+        echo "  Install with: sudo apt install sshpass"
+        exit 1
+    fi
+
+    if [ -z "${AOSCX_ADMIN_PASSWORD:-}" ]; then
+        err "AOSCX_ADMIN_PASSWORD is not set."
+        echo "  Set it in .env or export it before running this script."
+        exit 1
+    fi
+fi
+
+# ── Main ────────────────────────────────────────────────────────────
 for topo in "${TOPOS[@]}"; do
     deploy_topology "$topo"
     echo
 done
 
-log "Done. All topologies deployed and vCX configs applied."
+log "Done. All topologies deployed."

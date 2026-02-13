@@ -56,7 +56,7 @@ class ECOS_vm(vrnetlab.VM):
         )
         self.hostname = hostname
         self.conn_mode = conn_mode
-        self.num_nics = 6  # mgmt0, wan0, lan0, wan1, lan1, ha (typical EC-V config)
+        self.num_nics = 7  # mgmt0, wan0, lan0, wan1, lan1, ha, lan2
         self.nic_type = "virtio-net-pci"
         self.initial_config_applied = False
         self.reboot_pending = False
@@ -207,6 +207,7 @@ class ECOS_vm(vrnetlab.VM):
             send_cmd("interface lan0 mac address eth2", 2)
             send_cmd("interface wan1 mac address eth3", 2)
             send_cmd("interface lan1 mac address eth4", 2)
+            send_cmd("interface lan2 mac address eth6", 2)
 
             # Set hostname
             send_cmd(f'hostname {self.hostname}', 2)
