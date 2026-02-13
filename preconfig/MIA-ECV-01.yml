@@ -97,6 +97,38 @@ deploymentInfo:
       zone: Default
       role: default
 
+  dhcpInfo:
+    - dhcpInterfaceName: lan0
+      dhcpType: server
+      dhcpAddressMask: 192.168.90.0/24
+      startIpAddress: 192.168.90.100
+      endIpAddress: 192.168.90.200
+      gatewayIpAddress: 192.168.90.1
+      dnsServers:
+        - 8.8.8.8
+        - 8.8.4.4
+      defaultLease: 86400
+    - dhcpInterfaceName: lan1
+      dhcpType: server
+      dhcpAddressMask: 192.168.91.0/24
+      startIpAddress: 192.168.91.100
+      endIpAddress: 192.168.91.200
+      gatewayIpAddress: 192.168.91.1
+      dnsServers:
+        - 8.8.8.8
+        - 8.8.4.4
+      defaultLease: 86400
+    - dhcpInterfaceName: lan2
+      dhcpType: server
+      dhcpAddressMask: 192.168.92.0/24
+      startIpAddress: 192.168.92.100
+      endIpAddress: 192.168.92.200
+      gatewayIpAddress: 192.168.92.1
+      dnsServers:
+        - 8.8.8.8
+        - 8.8.4.4
+      defaultLease: 86400
+
 # end of deployment info
 
 # loopback configuration
@@ -154,44 +186,3 @@ segmentLocalRoutes:
         routeLabel: Internet
 # end of segment local routes
 
-# dhcp pool for CSN_Managed
-dhcpRemoteAddressPoolConfig:
-  segment: CSN_Managed
-  interfaceName: lan0
-  dhcpEnabled: true
-  startingIpAddress: 192.168.90.100
-  endingIpAddress: 192.168.90.200
-  subnetMask: 255.255.255.0
-  defaultGateway: 192.168.90.1
-  primaryDnsServer: 8.8.8.8
-  secondaryDnsServer: 8.8.4.4
-  domainName:
-  leaseTime: 86400
-
-# dhcp pool for CSN_Unmanaged
-dhcpRemoteAddressPoolConfig:
-  segment: CSN_Unmanaged
-  interfaceName: lan1
-  dhcpEnabled: true
-  startingIpAddress: 192.168.91.100
-  endingIpAddress: 192.168.91.200
-  subnetMask: 255.255.255.0
-  defaultGateway: 192.168.91.1
-  primaryDnsServer: 8.8.8.8
-  secondaryDnsServer: 8.8.4.4
-  domainName:
-  leaseTime: 86400
-
-# dhcp pool for CSN_Guest
-dhcpRemoteAddressPoolConfig:
-  segment: CSN_Guest
-  interfaceName: lan2
-  dhcpEnabled: true
-  startingIpAddress: 192.168.92.100
-  endingIpAddress: 192.168.92.200
-  subnetMask: 255.255.255.0
-  defaultGateway: 192.168.92.1
-  primaryDnsServer: 8.8.8.8
-  secondaryDnsServer: 8.8.4.4
-  domainName:
-  leaseTime: 86400
