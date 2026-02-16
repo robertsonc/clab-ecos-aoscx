@@ -26,6 +26,7 @@ applianceInfo:
 templateGroups:
   groups:
     - Default Template Group
+    - NAC
 # end of template groups
 
 # overlays
@@ -47,6 +48,7 @@ deploymentInfo:
 
   deploymentInterfaces:
     - interfaceName: lan0
+      interfaceLabel: Data
       interfaceType: lan
       interfaceComment: "CSN_Managed clients"
       ipAddressMask: 192.168.80.1/24
@@ -55,6 +57,7 @@ deploymentInfo:
       zone: Default
       role: MANAGED
     - interfaceName: lan1
+      interfaceLabel: Data
       interfaceType: lan
       interfaceComment: "CSN_Unmanaged clients"
       ipAddressMask: 192.168.81.1/24
