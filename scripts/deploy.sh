@@ -154,6 +154,9 @@ deploy_topology() {
         fi
     else
         log "No switches in this topology, skipping config push"
+        log "DHCP is served by EC-V appliances — clients will obtain leases once EC-Vs finish booting"
+        log "  (clients retry DHCP automatically via boot exec)"
+        return 0
     fi
 
     renew_client_dhcp "$topo"
