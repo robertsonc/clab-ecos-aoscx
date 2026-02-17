@@ -28,14 +28,6 @@ get_label() {
     esac
 }
 
-get_vlan_note() {
-    case "$1" in
-        *-managed)   echo "MANAGED_VLAN" ;;
-        *-unmanaged) echo "UNMANAGED_VLAN" ;;
-        *-guest)     echo "GUEST_VLAN" ;;
-    esac
-}
-
 collect_macs() {
     local topo=$1
     local prefix="${TOPO_CLAB_PREFIX[$topo]}"
@@ -50,10 +42,8 @@ collect_macs() {
         mac=$(echo "$mac" | tr -d ':' | tr '[:upper:]' '[:lower:]')
         local label
         label=$(get_label "$client")
-        local vlan_note
-        vlan_note=$(get_vlan_note "$client")
 
-        echo "${mac},\"${label}\",${container} ${today},\"${vlan_note}\",,,"
+        echo "${mac},\"${label}\",,${container} ${today},,"
     done
 }
 
