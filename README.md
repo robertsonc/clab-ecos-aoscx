@@ -544,6 +544,22 @@ sshpass -p admin ssh -o StrictHostKeyChecking=no admin@172.30.30.31
 # then fall back to the default admin/admin password
 ```
 
+### Test Clients Not Getting DHCP Leases
+
+If test clients fail to obtain DHCP leases (e.g., after a topology deploy or when the DHCP server was not ready at boot time), the boot exec's `udhcpc` process may still be running and blocking new requests. Use the helper script to kill existing processes and request fresh leases:
+
+```bash
+# Renew DHCP for a specific topology
+./scripts/renew-dhcp.sh chi-stl-dfw
+./scripts/renew-dhcp.sh sea-sfo-las
+./scripts/renew-dhcp.sh jfk-rdu-mia
+
+# Or renew all topologies
+./scripts/renew-dhcp.sh all
+```
+
+Note: For JFK-RDU-MIA, DHCP is served by the EC-V appliances (not vCX switches), so clients cannot obtain leases until the EC-Vs have fully booted.
+
 ### Clean Restart
 
 ```bash
