@@ -1,25 +1,46 @@
 #!/bin/bash
 # ============================================================
-#  deploy-all.sh — Deploy BGP peering to all four WAN hosts
+#  deploy-all.sh — Deploy inter-lab BGP peering to ISP sim hosts
 #
-#  Edit the CONTAINER_* variables below to match your actual
-#  containerlab container names (docker ps to check)
+#  Usage: ./deploy-all.sh <chi-stl-dfw|sea-sfo-las|jfk-rdu-mia|all>
 #
-#  This script copies the right config into each container
-#  and runs the setup script.
+#  This script copies the right FRR config into each ISP
+#  container and runs the setup script.
 # ============================================================
 
 set -euo pipefail
 
-# ---- EDIT THESE to match your container names ----
-# Use: docker ps --format '{{.Names}}' | grep -i isp
-# or:  sudo clab inspect -t <your-topo.yml>
-CONTAINER_LAB1_ISP_A="clab-chi-stl-dfw_ec-cx-isp-a"
-CONTAINER_LAB1_ISP_B="clab-chi-stl-dfw_ec-cx-isp-b"
-CONTAINER_LAB2_ISP_A="clab-sea-sfo-las_ec-cx-isp-a"
-CONTAINER_LAB2_ISP_B="clab-sea-sfo-las_ec-cx-isp-b"
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Topology → container prefix and lab number mapping
+declare -A TOPO_PREFIX=(
+    [chi-stl-dfw]="clab-chi-stl-dfw_ec-cx"
+    [sea-sfo-las]="clab-sea-sfo-las_ec-cx"
+    [jfk-rdu-mia]="clab-jfk-rdu-mia_ec"
+)
+
+declare -A TOPO_LAB=(
+    [chi-stl-dfw]="lab1"
+    [sea-sfo-las]="lab2"
+    [jfk-rdu-mia]="lab3"
+)
+
+declare -A TOPO_ISP_A_INFO=(
+    [chi-stl-dfw]="Lab1 ISP-A (172.30.30.10 / AS65010)"
+    [sea-sfo-las]="Lab2 ISP-A (172.30.30.12 / AS65012)"
+    [jfk-rdu-mia]="Lab3 ISP-A (172.30.30.14 / AS65014)"
+)
+
+declare -A TOPO_ISP_B_INFO=(
+    [chi-stl-dfw]="Lab1 ISP-B (172.30.30.11 / AS65011)"
+    [sea-sfo-las]="Lab2 ISP-B (172.30.30.13 / AS65013)"
+    [jfk-rdu-mia]="Lab3 ISP-B (172.30.30.15 / AS65015)"
+)
+
+usage() {
+    echo "Usage: $0 <chi-stl-dfw|sea-sfo-las|jfk-rdu-mia|all>"
+    exit 1
+}
 
 deploy_host() {
     local CONTAINER="$1"
@@ -46,16 +67,43 @@ deploy_host() {
     echo "  ✓ $HOST_LABEL complete"
 }
 
-deploy_host "$CONTAINER_LAB1_ISP_A" "lab1-isp-a" "Lab1 ISP-A (172.30.30.10 / AS65010)"
-deploy_host "$CONTAINER_LAB1_ISP_B" "lab1-isp-b" "Lab1 ISP-B (172.30.30.11 / AS65011)"
-deploy_host "$CONTAINER_LAB2_ISP_A" "lab2-isp-a" "Lab2 ISP-A (172.30.30.12 / AS65012)"
-deploy_host "$CONTAINER_LAB2_ISP_B" "lab2-isp-b" "Lab2 ISP-B (172.30.30.13 / AS65013)"
+deploy_topo() {
+    local topo=$1
+    local prefix="${TOPO_PREFIX[$topo]}"
+    local lab="${TOPO_LAB[$topo]}"
+
+    deploy_host "${prefix}-isp-a" "${lab}-isp-a" "${TOPO_ISP_A_INFO[$topo]}"
+    deploy_host "${prefix}-isp-b" "${lab}-isp-b" "${TOPO_ISP_B_INFO[$topo]}"
+}
+
+if [ $# -ne 1 ]; then
+    usage
+fi
+
+ARG="${1,,}"
+
+if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-las" && "$ARG" != "jfk-rdu-mia" && "$ARG" != "all" ]]; then
+    usage
+fi
+
+if [ "$ARG" = "all" ]; then
+    TOPOS=("chi-stl-dfw" "sea-sfo-las" "jfk-rdu-mia")
+else
+    TOPOS=("$ARG")
+fi
+
+for topo in "${TOPOS[@]}"; do
+    deploy_topo "$topo"
+done
 
 echo ""
 echo "======================================================"
-echo "  All hosts deployed. BGP sessions should come up"
-echo "  within ~30 seconds. Verify with:"
+echo "  Deployed BGP to: ${TOPOS[*]}"
+echo "  Sessions should come up within ~30 seconds."
 echo ""
-echo "  docker exec $CONTAINER_LAB1_ISP_A vtysh -c 'show bgp summary'"
-echo "  docker exec $CONTAINER_LAB1_ISP_A vtysh -c 'show ip route bgp'"
+echo "  Verify with:"
+for topo in "${TOPOS[@]}"; do
+    local_prefix="${TOPO_PREFIX[$topo]}"
+    echo "    docker exec ${local_prefix}-isp-a vtysh -c 'show bgp summary'"
+done
 echo "======================================================"
