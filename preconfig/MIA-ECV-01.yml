@@ -57,7 +57,7 @@ deploymentInfo:
       nextHop:
       segment: CSN_Managed
       zone: Default
-      role: MANAGED
+      role: LAN0_DEFAULT
     - interfaceName: lan1
       interfaceLabel: Data
       interfaceType: lan
@@ -66,7 +66,7 @@ deploymentInfo:
       nextHop:
       segment: CSN_Unmanaged
       zone: Default
-      role: UNMANAGED
+      role: LAN1_DEFAULT
     - interfaceName: lan2
       interfaceType: lan
       interfaceComment: "CSN_Guest clients"
@@ -74,7 +74,7 @@ deploymentInfo:
       nextHop:
       segment: CSN_Guest
       zone: Default
-      role: GUEST
+      role: LAN2_DEFAULT
     - interfaceName: wan0
       interfaceLabel: CL_ISP_A
       interfaceType: wan
