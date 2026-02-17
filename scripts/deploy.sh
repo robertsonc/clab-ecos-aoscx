@@ -112,7 +112,7 @@ renew_client_dhcp() {
     log "Renewing DHCP leases on test clients..."
     for client in $clients; do
         local container="${prefix}-${client}"
-        if docker exec "$container" sh -c "udhcpc -i eth1 -n -q && ip route del default dev eth0 2>/dev/null" &>/dev/null; then
+        if docker exec "$container" sh -c "killall udhcpc 2>/dev/null; sleep 1; udhcpc -i eth1 -t 5 -T 3 -q 2>&1 | grep -q 'lease of' && ip route del default dev eth0 2>/dev/null" &>/dev/null; then
             log "  $client: DHCP OK, default route via eth1"
         else
             err "  $client: DHCP failed"
