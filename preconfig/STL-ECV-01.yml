@@ -78,7 +78,7 @@ deploymentInfo:
       nextHop:
       inboundMaxBandwidth: 200000
       outboundMaxBandwidth: 200000
-      firewallMode: All
+      firewallMode: statefulSNAT
       behindNat: none
       segment: Default
       zone: Default
