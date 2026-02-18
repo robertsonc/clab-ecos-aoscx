@@ -145,49 +145,49 @@ topology:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
     DFW-client-unmanaged:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
     DFW-client-guest:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
 
     STL-client-managed:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
     STL-client-unmanaged:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
     STL-client-guest:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
 
     CHI-client-managed:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
     CHI-client-unmanaged:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
     CHI-client-guest:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
 
   links:
     #
