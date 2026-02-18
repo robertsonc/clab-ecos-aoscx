@@ -50,6 +50,7 @@ deploymentInfo:
 
   deploymentInterfaces:
     - interfaceName: lan0
+      interfaceLabel: Data
       interfaceType: lan
       interfaceComment: "to LAS-vCX-01 1/1/1"
       ipAddressMask: 10.6.0.2/30

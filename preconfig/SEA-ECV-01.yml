@@ -50,6 +50,7 @@ deploymentInfo:
 
   deploymentInterfaces:
     - interfaceName: lan0
+      interfaceLabel: Data
       interfaceType: lan
       interfaceComment: "to SEA-vCX-01 1/1/1"
       ipAddressMask: 10.4.0.2/30
