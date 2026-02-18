@@ -121,58 +121,49 @@ topology:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "apt-get update -qq > /dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps > /dev/null 2>&1"
-        - sh -c "dhclient eth1; ip route del default dev eth0 2>/dev/null; ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
     JFK-client-unmanaged:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "apt-get update -qq > /dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps > /dev/null 2>&1"
-        - sh -c "dhclient eth1; ip route del default dev eth0 2>/dev/null; ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
     JFK-client-guest:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "apt-get update -qq > /dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps > /dev/null 2>&1"
-        - sh -c "dhclient eth1; ip route del default dev eth0 2>/dev/null; ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
 
     RDU-client-managed:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "apt-get update -qq > /dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps > /dev/null 2>&1"
-        - sh -c "dhclient eth1; ip route del default dev eth0 2>/dev/null; ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
     RDU-client-unmanaged:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "apt-get update -qq > /dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps > /dev/null 2>&1"
-        - sh -c "dhclient eth1; ip route del default dev eth0 2>/dev/null; ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
     RDU-client-guest:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "apt-get update -qq > /dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps > /dev/null 2>&1"
-        - sh -c "dhclient eth1; ip route del default dev eth0 2>/dev/null; ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
 
     MIA-client-managed:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "apt-get update -qq > /dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps > /dev/null 2>&1"
-        - sh -c "dhclient eth1; ip route del default dev eth0 2>/dev/null; ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
     MIA-client-unmanaged:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "apt-get update -qq > /dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps > /dev/null 2>&1"
-        - sh -c "dhclient eth1; ip route del default dev eth0 2>/dev/null; ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
     MIA-client-guest:
       kind: linux
       image: ubuntu:24.04
       exec:
-        - sh -c "apt-get update -qq > /dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps > /dev/null 2>&1"
-        - sh -c "dhclient eth1; ip route del default dev eth0 2>/dev/null; ping -i 5 8.8.8.8 > /dev/null 2>&1 &"
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
 
   links:
     #
