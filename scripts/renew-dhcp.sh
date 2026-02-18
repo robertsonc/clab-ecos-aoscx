@@ -30,7 +30,7 @@ renew_dhcp() {
     for client in $clients; do
         local container="${prefix}-${client}"
         if docker exec "$container" sh -c \
-            "killall dhclient 2>/dev/null; sleep 1; dhclient -1 eth1 2>/dev/null && ip route del default dev eth0 2>/dev/null" \
+            "killall dhclient 2>/dev/null; sleep 1; dhclient eth1 2>/dev/null; sleep 3; ip route del default dev eth0 2>/dev/null" \
             &>/dev/null; then
             echo "  $client: OK"
         else
