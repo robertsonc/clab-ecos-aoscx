@@ -158,7 +158,7 @@ segmentBgpSystems:
         password:
         enableEVPN: true
 
-  - segment: CSN_Managed
+  - segment: Managed
     enable: true
     asn: 64005
     routerId: 172.30.30.25
@@ -172,7 +172,7 @@ segmentBgpSystems:
     importRouteTarget: 65005:10010
     exportRouteTarget: 65005:10010
 
-  - segment: CSN_Unmanaged
+  - segment: Unmanaged
     enable: true
     asn: 64005
     routerId: 172.30.30.25
@@ -186,7 +186,7 @@ segmentBgpSystems:
     importRouteTarget: 65005:10011
     exportRouteTarget: 65005:10011
 
-  - segment: CSN_Guest
+  - segment: Guest
     enable: true
     asn: 64005
     routerId: 172.30.30.25
@@ -203,7 +203,7 @@ segmentBgpSystems:
 
 # segment local routes
 segmentLocalRoutes:
-  - segment: CSN_Managed
+  - segment: Managed
     routes:
       - routeIpSubnet: 0.0.0.0/0
         nextHop:
@@ -214,9 +214,9 @@ segmentLocalRoutes:
         advertiseToOspf: false
         tag: ANY
         zone:
-        comment: Default for CSN_Managed
+        comment: Default for Managed
         routeLabel: Internet
-  - segment: CSN_Unmanaged
+  - segment: Unmanaged
     routes:
       - routeIpSubnet: 0.0.0.0/0
         nextHop:
@@ -227,9 +227,9 @@ segmentLocalRoutes:
         advertiseToOspf: false
         tag: ANY
         zone:
-        comment: Default for CSN_Unmanaged
+        comment: Default for Unmanaged
         routeLabel: Internet
-  - segment: CSN_Guest
+  - segment: Guest
     routes:
       - routeIpSubnet: 0.0.0.0/0
         nextHop:
@@ -240,7 +240,7 @@ segmentLocalRoutes:
         advertiseToOspf: false
         tag: ANY
         zone:
-        comment: Default for CSN_Guest
+        comment: Default for Guest
         routeLabel: Internet
 # end of segment local routes
 

@@ -52,27 +52,27 @@ deploymentInfo:
     - interfaceName: lan0
       interfaceLabel: Data
       interfaceType: lan
-      interfaceComment: "CSN_Managed clients"
+      interfaceComment: "Managed clients"
       ipAddressMask: 192.168.70.1/24
       nextHop:
-      segment: CSN_Managed
+      segment: Managed
       zone: Default
       role: LAN0_DEFAULT
     - interfaceName: lan1
       interfaceLabel: Data
       interfaceType: lan
-      interfaceComment: "CSN_Unmanaged clients"
+      interfaceComment: "Unmanaged clients"
       ipAddressMask: 192.168.71.1/24
       nextHop:
-      segment: CSN_Unmanaged
+      segment: Unmanaged
       zone: Default
       role: LAN1_DEFAULT
     - interfaceName: lan2
       interfaceType: lan
-      interfaceComment: "CSN_Guest clients"
+      interfaceComment: "Guest clients"
       ipAddressMask: 192.168.72.1/24
       nextHop:
-      segment: CSN_Guest
+      segment: Guest
       zone: Default
       role: LAN2_DEFAULT
     - interfaceName: wan0
@@ -150,7 +150,7 @@ loopbackInterface:
 
 # segment local routes
 segmentLocalRoutes:
-  - segment: CSN_Managed
+  - segment: Managed
     routes:
       - routeIpSubnet: 0.0.0.0/0
         nextHop:
@@ -161,9 +161,9 @@ segmentLocalRoutes:
         advertiseToOspf: false
         tag: ANY
         zone:
-        comment: Default for CSN_Managed
+        comment: Default for Managed
         routeLabel: Internet
-  - segment: CSN_Unmanaged
+  - segment: Unmanaged
     routes:
       - routeIpSubnet: 0.0.0.0/0
         nextHop:
@@ -174,9 +174,9 @@ segmentLocalRoutes:
         advertiseToOspf: false
         tag: ANY
         zone:
-        comment: Default for CSN_Unmanaged
+        comment: Default for Unmanaged
         routeLabel: Internet
-  - segment: CSN_Guest
+  - segment: Guest
     routes:
       - routeIpSubnet: 0.0.0.0/0
         nextHop:
@@ -187,7 +187,7 @@ segmentLocalRoutes:
         advertiseToOspf: false
         tag: ANY
         zone:
-        comment: Default for CSN_Guest
+        comment: Default for Guest
         routeLabel: Internet
 # end of segment local routes
 
