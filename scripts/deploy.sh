@@ -32,6 +32,13 @@ declare -A TOPO_CLIENTS=(
     [jfk-rdu-mia]="JFK-client-managed JFK-client-unmanaged JFK-client-guest RDU-client-managed RDU-client-unmanaged RDU-client-guest MIA-client-managed MIA-client-unmanaged MIA-client-guest"
 )
 
+# Management IPs per topology (transport, EC-V, vCX)
+declare -A TOPO_MGMT_IPS=(
+    [chi-stl-dfw]="172.30.30.10 172.30.30.11 172.30.30.21 172.30.30.22 172.30.30.23 172.30.30.31 172.30.30.32 172.30.30.33"
+    [sea-sfo-las]="172.30.30.12 172.30.30.13 172.30.30.24 172.30.30.25 172.30.30.26 172.30.30.34 172.30.30.35 172.30.30.36"
+    [jfk-rdu-mia]="172.30.30.14 172.30.30.15 172.30.30.27 172.30.30.28 172.30.30.29"
+)
+
 SSH_OPTS="-T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10"
 SSH_TIMEOUT=300  # 5 minutes
 SSH_POLL=10      # poll interval in seconds
@@ -44,6 +51,17 @@ usage() {
 
 log() { echo "==> $*"; }
 err() { echo "ERROR: $*" >&2; }
+
+clean_known_hosts() {
+    local topo=$1
+    local ips="${TOPO_MGMT_IPS[$topo]}"
+    local known_hosts="$HOME/.ssh/known_hosts"
+    [ -f "$known_hosts" ] || return 0
+    log "Removing stale SSH host keys for $topo..."
+    for ip in $ips; do
+        ssh-keygen -f "$known_hosts" -R "$ip" &>/dev/null
+    done
+}
 
 wait_for_ssh() {
     local host=$1 name=$2
@@ -133,6 +151,8 @@ deploy_topology() {
     log "Deploying topology: $topo_file"
     sudo -E clab deploy -t "$topo_path"
     log "Topology deployed successfully"
+
+    clean_known_hosts "$topo"
 
     local switches="${TOPO_SWITCHES[$topo]}"
     if [ -n "$switches" ]; then

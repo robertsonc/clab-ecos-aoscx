@@ -11,6 +11,13 @@ declare -A TOPO_FILES=(
     [jfk-rdu-mia]="examples/JFK-RDU-MIA_topology.clab.yml"
 )
 
+# Management IPs per topology (transport, EC-V, vCX)
+declare -A TOPO_MGMT_IPS=(
+    [chi-stl-dfw]="172.30.30.10 172.30.30.11 172.30.30.21 172.30.30.22 172.30.30.23 172.30.30.31 172.30.30.32 172.30.30.33"
+    [sea-sfo-las]="172.30.30.12 172.30.30.13 172.30.30.24 172.30.30.25 172.30.30.26 172.30.30.34 172.30.30.35 172.30.30.36"
+    [jfk-rdu-mia]="172.30.30.14 172.30.30.15 172.30.30.27 172.30.30.28 172.30.30.29"
+)
+
 # ── Helpers ─────────────────────────────────────────────────────────
 usage() {
     echo "Usage: $0 <chi-stl-dfw|sea-sfo-las|jfk-rdu-mia|all>"
@@ -19,6 +26,17 @@ usage() {
 
 log() { echo "==> $*"; }
 err() { echo "ERROR: $*" >&2; }
+
+clean_known_hosts() {
+    local topo=$1
+    local ips="${TOPO_MGMT_IPS[$topo]}"
+    local known_hosts="$HOME/.ssh/known_hosts"
+    [ -f "$known_hosts" ] || return 0
+    log "Removing stale SSH host keys for $topo..."
+    for ip in $ips; do
+        ssh-keygen -f "$known_hosts" -R "$ip" &>/dev/null
+    done
+}
 
 destroy_topology() {
     local topo=$1
@@ -32,6 +50,7 @@ destroy_topology() {
 
     log "Destroying topology: $topo_file"
     sudo clab destroy -t "$topo_path" --cleanup
+    clean_known_hosts "$topo"
     log "Topology destroyed: $topo"
 }
 
