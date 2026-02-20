@@ -2,7 +2,7 @@
 # ============================================================
 #  deploy-all.sh — Deploy inter-lab BGP peering to ISP sim hosts
 #
-#  Usage: ./deploy-all.sh <chi-stl-dfw|sea-sfo-las|jfk-rdu-mia|all>
+#  Usage: ./deploy-all.sh <chi-stl-dfw|sea-sfo-lax|jfk-rdu-mia|all>
 #
 #  This script copies the right FRR config into each ISP
 #  container and runs the setup script.
@@ -15,30 +15,30 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Topology → container prefix and lab number mapping
 declare -A TOPO_PREFIX=(
     [chi-stl-dfw]="clab-chi-stl-dfw_ec-cx"
-    [sea-sfo-las]="clab-sea-sfo-las_ec-cx"
+    [sea-sfo-lax]="clab-sea-sfo-lax_ec-cx"
     [jfk-rdu-mia]="clab-jfk-rdu-mia_ec"
 )
 
 declare -A TOPO_LAB=(
     [chi-stl-dfw]="lab1"
-    [sea-sfo-las]="lab2"
+    [sea-sfo-lax]="lab2"
     [jfk-rdu-mia]="lab3"
 )
 
 declare -A TOPO_ISP_A_INFO=(
     [chi-stl-dfw]="Lab1 ISP-A (172.30.30.10 / AS65010)"
-    [sea-sfo-las]="Lab2 ISP-A (172.30.30.12 / AS65012)"
+    [sea-sfo-lax]="Lab2 ISP-A (172.30.30.12 / AS65012)"
     [jfk-rdu-mia]="Lab3 ISP-A (172.30.30.14 / AS65014)"
 )
 
 declare -A TOPO_ISP_B_INFO=(
     [chi-stl-dfw]="Lab1 ISP-B (172.30.30.11 / AS65011)"
-    [sea-sfo-las]="Lab2 ISP-B (172.30.30.13 / AS65013)"
+    [sea-sfo-lax]="Lab2 ISP-B (172.30.30.13 / AS65013)"
     [jfk-rdu-mia]="Lab3 ISP-B (172.30.30.15 / AS65015)"
 )
 
 usage() {
-    echo "Usage: $0 <chi-stl-dfw|sea-sfo-las|jfk-rdu-mia|all>"
+    echo "Usage: $0 <chi-stl-dfw|sea-sfo-lax|jfk-rdu-mia|all>"
     exit 1
 }
 
@@ -82,12 +82,12 @@ fi
 
 ARG="${1,,}"
 
-if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-las" && "$ARG" != "jfk-rdu-mia" && "$ARG" != "all" ]]; then
+if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-lax" && "$ARG" != "jfk-rdu-mia" && "$ARG" != "all" ]]; then
     usage
 fi
 
 if [ "$ARG" = "all" ]; then
-    TOPOS=("chi-stl-dfw" "sea-sfo-las" "jfk-rdu-mia")
+    TOPOS=("chi-stl-dfw" "sea-sfo-lax" "jfk-rdu-mia")
 else
     TOPOS=("$ARG")
 fi

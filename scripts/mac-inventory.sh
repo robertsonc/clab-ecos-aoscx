@@ -5,18 +5,18 @@ set -euo pipefail
 
 declare -A TOPO_CLAB_PREFIX=(
     [chi-stl-dfw]="clab-chi-stl-dfw_ec-cx"
-    [sea-sfo-las]="clab-sea-sfo-las_ec-cx"
+    [sea-sfo-lax]="clab-sea-sfo-lax_ec-cx"
     [jfk-rdu-mia]="clab-jfk-rdu-mia_ec"
 )
 
 declare -A TOPO_CLIENTS=(
     [chi-stl-dfw]="DFW-client-managed DFW-client-unmanaged DFW-client-guest STL-client-managed STL-client-unmanaged STL-client-guest CHI-client-managed CHI-client-unmanaged CHI-client-guest"
-    [sea-sfo-las]="SEA-client-managed SEA-client-unmanaged SEA-client-guest SFO-client-managed SFO-client-unmanaged SFO-client-guest LAS-client-managed LAS-client-unmanaged LAS-client-guest"
+    [sea-sfo-lax]="SEA-client-managed SEA-client-unmanaged SEA-client-guest SFO-client-managed SFO-client-unmanaged SFO-client-guest LAX-client-managed LAX-client-unmanaged LAX-client-guest"
     [jfk-rdu-mia]="JFK-client-managed JFK-client-unmanaged JFK-client-guest RDU-client-managed RDU-client-unmanaged RDU-client-guest MIA-client-managed MIA-client-unmanaged MIA-client-guest"
 )
 
 usage() {
-    echo "Usage: $0 <chi-stl-dfw|sea-sfo-las|jfk-rdu-mia|all>"
+    echo "Usage: $0 <chi-stl-dfw|sea-sfo-lax|jfk-rdu-mia|all>"
     exit 1
 }
 
@@ -53,12 +53,12 @@ fi
 
 ARG="${1,,}"
 
-if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-las" && "$ARG" != "jfk-rdu-mia" && "$ARG" != "all" ]]; then
+if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-lax" && "$ARG" != "jfk-rdu-mia" && "$ARG" != "all" ]]; then
     usage
 fi
 
 if [ "$ARG" = "all" ]; then
-    TOPOS=("chi-stl-dfw" "sea-sfo-las" "jfk-rdu-mia")
+    TOPOS=("chi-stl-dfw" "sea-sfo-lax" "jfk-rdu-mia")
 else
     TOPOS=("$ARG")
 fi

@@ -1,16 +1,16 @@
 # ECOS + AOS-CX Lab Topology
 #
 # This topology creates a 3-site SD-WAN lab with:
-# - 3 EdgeConnect EC-V appliances (SEA, SFO, LAS)
+# - 3 EdgeConnect EC-V appliances (SEA, SFO, LAX)
 # - 3 AOS-CX switches (one per site)
 # - 2 Linux nodes acting as ISP-A and ISP-B transport
 #
 # Site Layout:
 #   SEA (Seattle, WA)        - SEA-ECV-01 + SEA-vCX-01
 #   SFO (San Francisco, CA)  - SFO-ECV-01 + SFO-vCX-01
-#   LAS (Las Vegas, NV)      - LAS-ECV-01 + LAS-vCX-01
+#   LAX (Los Angeles, CA)    - LAX-ECV-01 + LAX-vCX-01
 
-name: sea-sfo-las_ec-cx
+name: sea-sfo-lax_ec-cx
 
 mgmt:
   network: clab-mgmt
@@ -30,7 +30,7 @@ topology:
       image: ghcr.io/srl-labs/network-multitool
       mgmt-ipv4: 172.30.30.12
       binds:
-        - ../configs/sea-sfo-las-isp-a-dnsmasq.conf:/etc/dnsmasq.conf:ro
+        - ../configs/sea-sfo-lax-isp-a-dnsmasq.conf:/etc/dnsmasq.conf:ro
       exec:
         - sysctl -w net.ipv4.ip_forward=1
         - ip addr add 192.168.103.1/24 dev eth1
@@ -54,7 +54,7 @@ topology:
       image: ghcr.io/srl-labs/network-multitool
       mgmt-ipv4: 172.30.30.13
       binds:
-        - ../configs/sea-sfo-las-isp-b-dnsmasq.conf:/etc/dnsmasq.conf:ro
+        - ../configs/sea-sfo-lax-isp-b-dnsmasq.conf:/etc/dnsmasq.conf:ro
       exec:
         - sysctl -w net.ipv4.ip_forward=1
         - ip addr add 10.100.3.1/24 dev eth1
@@ -117,9 +117,9 @@ topology:
         AOSCX_ADMIN_PASSWORD: ${AOSCX_ADMIN_PASSWORD:-}
 
     #
-    # === Las Vegas Site (LAS) ===
+    # === Los Angeles Site (LAX) ===
     #
-    LAS-ECV-01:
+    LAX-ECV-01:
       kind: generic_vm
       image: vrnetlab/aruba_ecos:9.6.1.0_106887
       mgmt-ipv4: 172.30.30.26
@@ -127,14 +127,14 @@ topology:
         ECOS_ADMIN_PASSWORD: ${ECOS_ADMIN_PASSWORD:-}
         ECOS_REGISTRATION_KEY: ${ECOS_REGISTRATION_KEY:-}
         ECOS_ACCOUNT_NAME: ${ECOS_ACCOUNT_NAME:-}
-        ECOS_SITE_TAG: LasVegas_NV
+        ECOS_SITE_TAG: LosAngeles_CA
         ECOS_PORTAL_HOSTNAME: ${ECOS_PORTAL_HOSTNAME:-}
 
-    LAS-vCX-01:
+    LAX-vCX-01:
       kind: vr-aoscx
       image: vrnetlab/aruba_arubaos-cx:20250822141147
       mgmt-ipv4: 172.30.30.36
-      startup-config: ../configs/LAS-vCX-01.cfg
+      startup-config: ../configs/LAX-vCX-01.cfg
       env:
         AOSCX_ADMIN_PASSWORD: ${AOSCX_ADMIN_PASSWORD:-}
 
@@ -181,7 +181,7 @@ topology:
       exec:
         - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
 
-    LAS-client-managed:
+    LAX-client-managed:
       kind: linux
       image: jrei/systemd-ubuntu:24.04
       cap-add:
@@ -190,12 +190,12 @@ topology:
         - /sys/fs/cgroup:/sys/fs/cgroup:rw
       exec:
         - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
-    LAS-client-unmanaged:
+    LAX-client-unmanaged:
       kind: linux
       image: ubuntu:24.04
       exec:
         - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
-    LAS-client-guest:
+    LAX-client-guest:
       kind: linux
       image: ubuntu:24.04
       exec:
@@ -211,22 +211,22 @@ topology:
     # San Francisco: SFO-ECV-01:lan0 (eth2) <-> SFO-vCX-01:1/1/1 (eth1)
     - endpoints: ["SFO-ECV-01:eth2", "SFO-vCX-01:eth1"]
 
-    # Las Vegas: LAS-ECV-01:lan0 (eth2) <-> LAS-vCX-01:1/1/1 (eth1)
-    - endpoints: ["LAS-ECV-01:eth2", "LAS-vCX-01:eth1"]
+    # Los Angeles: LAX-ECV-01:lan0 (eth2) <-> LAX-vCX-01:1/1/1 (eth1)
+    - endpoints: ["LAX-ECV-01:eth2", "LAX-vCX-01:eth1"]
 
     #
     # === WAN0 Links (EC-V wan0 <-> isp-a) ===
     #
     - endpoints: ["SEA-ECV-01:eth1", "isp-a:eth1"]
     - endpoints: ["SFO-ECV-01:eth1", "isp-a:eth2"]
-    - endpoints: ["LAS-ECV-01:eth1", "isp-a:eth3"]
+    - endpoints: ["LAX-ECV-01:eth1", "isp-a:eth3"]
 
     #
     # === WAN1 Links (EC-V wan1 <-> isp-b) ===
     #
     - endpoints: ["SEA-ECV-01:eth3", "isp-b:eth1"]
     - endpoints: ["SFO-ECV-01:eth3", "isp-b:eth2"]
-    - endpoints: ["LAS-ECV-01:eth3", "isp-b:eth3"]
+    - endpoints: ["LAX-ECV-01:eth3", "isp-b:eth3"]
 
     #
     # === Client Links (client:eth1 <-> vCX access ports) ===
@@ -241,7 +241,7 @@ topology:
     - endpoints: ["SFO-client-unmanaged:eth1", "SFO-vCX-01:eth3"]
     - endpoints: ["SFO-client-guest:eth1", "SFO-vCX-01:eth4"]
 
-    # Las Vegas clients
-    - endpoints: ["LAS-client-managed:eth1", "LAS-vCX-01:eth2"]
-    - endpoints: ["LAS-client-unmanaged:eth1", "LAS-vCX-01:eth3"]
-    - endpoints: ["LAS-client-guest:eth1", "LAS-vCX-01:eth4"]
+    # Los Angeles clients
+    - endpoints: ["LAX-client-managed:eth1", "LAX-vCX-01:eth2"]
+    - endpoints: ["LAX-client-unmanaged:eth1", "LAX-vCX-01:eth3"]
+    - endpoints: ["LAX-client-guest:eth1", "LAX-vCX-01:eth4"]

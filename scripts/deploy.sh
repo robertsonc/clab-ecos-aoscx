@@ -7,35 +7,35 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # ── Topology → switch mappings ──────────────────────────────────────
 declare -A TOPO_FILES=(
     [chi-stl-dfw]="examples/CHI-STL-DFW_topology.clab.yml"
-    [sea-sfo-las]="examples/SEA-SFO-LAS_topology.clab.yml"
+    [sea-sfo-lax]="examples/SEA-SFO-LAX_topology.clab.yml"
     [jfk-rdu-mia]="examples/JFK-RDU-MIA_topology.clab.yml"
 )
 
 # Each topology's switches: "name:ip:config ..."
 declare -A TOPO_SWITCHES=(
     [chi-stl-dfw]="DFW-vCX-01:172.30.30.31:configs/DFW-vCX-01.cfg STL-vCX-01:172.30.30.32:configs/STL-vCX-01.cfg CHI-vCX-01:172.30.30.33:configs/CHI-vCX-01.cfg"
-    [sea-sfo-las]="SEA-vCX-01:172.30.30.34:configs/SEA-vCX-01.cfg SFO-vCX-01:172.30.30.35:configs/SFO-vCX-01.cfg LAS-vCX-01:172.30.30.36:configs/LAS-vCX-01.cfg"
+    [sea-sfo-lax]="SEA-vCX-01:172.30.30.34:configs/SEA-vCX-01.cfg SFO-vCX-01:172.30.30.35:configs/SFO-vCX-01.cfg LAX-vCX-01:172.30.30.36:configs/LAX-vCX-01.cfg"
     [jfk-rdu-mia]=""
 )
 
 # Clab container prefix per topology
 declare -A TOPO_CLAB_PREFIX=(
     [chi-stl-dfw]="clab-chi-stl-dfw_ec-cx"
-    [sea-sfo-las]="clab-sea-sfo-las_ec-cx"
+    [sea-sfo-lax]="clab-sea-sfo-lax_ec-cx"
     [jfk-rdu-mia]="clab-jfk-rdu-mia_ec"
 )
 
 # Each topology's test clients (container node names)
 declare -A TOPO_CLIENTS=(
     [chi-stl-dfw]="DFW-client-managed DFW-client-unmanaged DFW-client-guest STL-client-managed STL-client-unmanaged STL-client-guest CHI-client-managed CHI-client-unmanaged CHI-client-guest"
-    [sea-sfo-las]="SEA-client-managed SEA-client-unmanaged SEA-client-guest SFO-client-managed SFO-client-unmanaged SFO-client-guest LAS-client-managed LAS-client-unmanaged LAS-client-guest"
+    [sea-sfo-lax]="SEA-client-managed SEA-client-unmanaged SEA-client-guest SFO-client-managed SFO-client-unmanaged SFO-client-guest LAX-client-managed LAX-client-unmanaged LAX-client-guest"
     [jfk-rdu-mia]="JFK-client-managed JFK-client-unmanaged JFK-client-guest RDU-client-managed RDU-client-unmanaged RDU-client-guest MIA-client-managed MIA-client-unmanaged MIA-client-guest"
 )
 
 # Management IPs per topology (transport, EC-V, vCX)
 declare -A TOPO_MGMT_IPS=(
     [chi-stl-dfw]="172.30.30.10 172.30.30.11 172.30.30.21 172.30.30.22 172.30.30.23 172.30.30.31 172.30.30.32 172.30.30.33"
-    [sea-sfo-las]="172.30.30.12 172.30.30.13 172.30.30.24 172.30.30.25 172.30.30.26 172.30.30.34 172.30.30.35 172.30.30.36"
+    [sea-sfo-lax]="172.30.30.12 172.30.30.13 172.30.30.24 172.30.30.25 172.30.30.26 172.30.30.34 172.30.30.35 172.30.30.36"
     [jfk-rdu-mia]="172.30.30.14 172.30.30.15 172.30.30.27 172.30.30.28 172.30.30.29"
 )
 
@@ -45,7 +45,7 @@ SSH_POLL=10      # poll interval in seconds
 
 # ── Helpers ─────────────────────────────────────────────────────────
 usage() {
-    echo "Usage: $0 <chi-stl-dfw|sea-sfo-las|jfk-rdu-mia|all>"
+    echo "Usage: $0 <chi-stl-dfw|sea-sfo-lax|jfk-rdu-mia|all>"
     exit 1
 }
 
@@ -189,7 +189,7 @@ fi
 
 ARG="${1,,}"  # lowercase
 
-if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-las" && "$ARG" != "jfk-rdu-mia" && "$ARG" != "all" ]]; then
+if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-lax" && "$ARG" != "jfk-rdu-mia" && "$ARG" != "all" ]]; then
     usage
 fi
 
@@ -201,7 +201,7 @@ fi
 
 # Build list of topologies to deploy
 if [ "$ARG" = "all" ]; then
-    TOPOS=("chi-stl-dfw" "sea-sfo-las" "jfk-rdu-mia")
+    TOPOS=("chi-stl-dfw" "sea-sfo-lax" "jfk-rdu-mia")
 else
     TOPOS=("$ARG")
 fi

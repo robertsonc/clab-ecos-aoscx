@@ -1,18 +1,18 @@
 # appliance info
 applianceInfo:
   softwareVersion:
-  hostname: LAS-ECV-01
+  hostname: LAX-ECV-01
   group: CLAB
-  site: CLAB-LAS
+  site: CLAB-LAX
   clusterProfile:
   networkRole: non-hub
   region: lab
   location:
-    address: 3150 Paradise Rd
+    address: 1 World Way
     address2:
-    city: Las Vegas
-    state: Nevada
-    zipCode: 89109
+    city: Los Angeles
+    state: California
+    zipCode: 90045
     country: US
     latitude:
     longitude:
@@ -52,7 +52,7 @@ deploymentInfo:
     - interfaceName: lan0
       interfaceLabel: Data
       interfaceType: lan
-      interfaceComment: "to LAS-vCX-01 1/1/1"
+      interfaceComment: "to LAX-vCX-01 1/1/1"
       ipAddressMask: 10.6.0.2/30
       nextHop:
       segment: Default

@@ -27,10 +27,10 @@ The lab consists of two independent 3-site topologies that can be deployed indiv
 - All EC-V `wan1` → **mpls** transport node
 - 9 test clients (3 per site: managed, unmanaged, guest)
 
-**Topology 2: SEA-SFO-LAS** (Seattle, San Francisco, Las Vegas)
+**Topology 2: SEA-SFO-LAX** (Seattle, San Francisco, Los Angeles)
 - SEA-ECV-01 `lan0` ↔ SEA-vCX-01 `1/1/1`
 - SFO-ECV-01 `lan0` ↔ SFO-vCX-01 `1/1/1`
-- LAS-ECV-01 `lan0` ↔ LAS-vCX-01 `1/1/1`
+- LAX-ECV-01 `lan0` ↔ LAX-vCX-01 `1/1/1`
 - All EC-V `wan0` → **internet** transport node
 - All EC-V `wan1` → **mpls** transport node
 - 9 test clients (3 per site: managed, unmanaged, guest)
@@ -250,7 +250,7 @@ source .env
 
 # Deploy a single topology
 ./scripts/deploy.sh chi-stl-dfw
-./scripts/deploy.sh sea-sfo-las
+./scripts/deploy.sh sea-sfo-lax
 
 # Or deploy both topologies
 ./scripts/deploy.sh all
@@ -284,18 +284,18 @@ docker logs -f clab-chi-stl-dfw_ec-cx-DFW-vCX-01
 | internet | Linux | N/A | docker exec -it clab-chi-stl-dfw_ec-cx-internet bash |
 | mpls | Linux | N/A | docker exec -it clab-chi-stl-dfw_ec-cx-mpls bash |
 
-**SEA-SFO-LAS Topology:**
+**SEA-SFO-LAX Topology:**
 
 | Node | Type | Web UI | SSH |
 |------|------|--------|-----|
 | SEA-ECV-01 | EC-V | https://172.30.30.24 | ssh admin@172.30.30.24 |
 | SFO-ECV-01 | EC-V | https://172.30.30.25 | ssh admin@172.30.30.25 |
-| LAS-ECV-01 | EC-V | https://172.30.30.26 | ssh admin@172.30.30.26 |
+| LAX-ECV-01 | EC-V | https://172.30.30.26 | ssh admin@172.30.30.26 |
 | SEA-vCX-01 | AOS-CX | https://172.30.30.34 | ssh admin@172.30.30.34 |
 | SFO-vCX-01 | AOS-CX | https://172.30.30.35 | ssh admin@172.30.30.35 |
-| LAS-vCX-01 | AOS-CX | https://172.30.30.36 | ssh admin@172.30.30.36 |
-| internet | Linux | N/A | docker exec -it clab-sea-sfo-las_ec-cx-internet bash |
-| mpls | Linux | N/A | docker exec -it clab-sea-sfo-las_ec-cx-mpls bash |
+| LAX-vCX-01 | AOS-CX | https://172.30.30.36 | ssh admin@172.30.30.36 |
+| internet | Linux | N/A | docker exec -it clab-sea-sfo-lax_ec-cx-internet bash |
+| mpls | Linux | N/A | docker exec -it clab-sea-sfo-lax_ec-cx-mpls bash |
 
 Default credentials: `admin` / `admin`
 
@@ -304,7 +304,7 @@ Default credentials: `admin` / `admin`
 ```bash
 # Destroy a single topology
 ./scripts/destroy.sh chi-stl-dfw
-./scripts/destroy.sh sea-sfo-las
+./scripts/destroy.sh sea-sfo-lax
 
 # Or destroy both
 ./scripts/destroy.sh all
@@ -343,7 +343,7 @@ Each vCX switch has a startup config in `configs/` that is pushed via SSH during
 | CHI | 198.18.3.1/32 | 10.3.0.1/31 | 192.168.30.1/24 | 192.168.31.1/24 | 192.168.32.1/24 |
 | SEA | 198.18.4.1/32 | 10.4.0.1/31 | 192.168.40.1/24 | 192.168.41.1/24 | 192.168.42.1/24 |
 | SFO | 198.18.5.1/32 | 10.5.0.1/31 | 192.168.50.1/24 | 192.168.51.1/24 | 192.168.52.1/24 |
-| LAS | 198.18.6.1/32 | 10.6.0.1/31 | 192.168.60.1/24 | 192.168.61.1/24 | 192.168.62.1/24 |
+| LAX | 198.18.6.1/32 | 10.6.0.1/31 | 192.168.60.1/24 | 192.168.61.1/24 | 192.168.62.1/24 |
 
 ### EdgeConnect Preconfigurations
 
@@ -551,7 +551,7 @@ If test clients fail to obtain DHCP leases (e.g., after a topology deploy or whe
 ```bash
 # Renew DHCP for a specific topology
 ./scripts/renew-dhcp.sh chi-stl-dfw
-./scripts/renew-dhcp.sh sea-sfo-las
+./scripts/renew-dhcp.sh sea-sfo-lax
 ./scripts/renew-dhcp.sh jfk-rdu-mia
 
 # Or renew all topologies
@@ -580,14 +580,14 @@ clab-ecos-aoscx/
 ├── configs/                                 # Device startup configurations
 │   ├── CHI-vCX-01.cfg                       # AOS-CX switch configs (6 total)
 │   ├── DFW-vCX-01.cfg
-│   ├── LAS-vCX-01.cfg
+│   ├── LAX-vCX-01.cfg
 │   ├── SEA-vCX-01.cfg
 │   ├── SFO-vCX-01.cfg
 │   ├── STL-vCX-01.cfg
 │   ├── chi-stl-dfw-internet-dnsmasq.conf    # DNSMasq DHCP configs (4 total)
 │   ├── chi-stl-dfw-mpls-dnsmasq.conf
-│   ├── sea-sfo-las-internet-dnsmasq.conf
-│   └── sea-sfo-las-mpls-dnsmasq.conf
+│   ├── sea-sfo-lax-internet-dnsmasq.conf
+│   └── sea-sfo-lax-mpls-dnsmasq.conf
 ├── ecos/                                    # EdgeConnect custom vrnetlab node type
 │   ├── Makefile
 │   └── docker/
@@ -595,11 +595,11 @@ clab-ecos-aoscx/
 │       └── launch.py
 ├── examples/                                # ContainerLab topology definitions
 │   ├── CHI-STL-DFW_topology.clab.yml
-│   └── SEA-SFO-LAS_topology.clab.yml
+│   └── SEA-SFO-LAX_topology.clab.yml
 ├── preconfig/                               # EC-V Orchestrator preconfigurations
 │   ├── CHI-ECV-01.yml
 │   ├── DFW-ECV-01.yml
-│   ├── LAS-ECV-01.yml
+│   ├── LAX-ECV-01.yml
 │   ├── SEA-ECV-01.yml
 │   ├── SFO-ECV-01.yml
 │   └── STL-ECV-01.yml
