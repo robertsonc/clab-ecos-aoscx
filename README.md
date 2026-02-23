@@ -6,55 +6,81 @@ Run HPE Aruba EdgeConnect SD-WAN and AOS-CX switches together in ContainerLab.
 
 This repo provides everything needed to run a complete EdgeConnect SD-WAN lab with:
 - **EdgeConnect Virtual (EC-V)** - SD-WAN appliances with Orchestrator preconfigurations
-- **AOS-CX Virtual (vCX)** - Data center switches with full VXLAN/EVPN, BGP, OSPF, and VRF configurations
-- **Linux transport nodes** - Simulating internet and MPLS WAN networks with DHCP
-- **Test clients** - Per-segment clients for validating end-to-end connectivity
-- **Deploy/destroy scripts** - Automated topology deployment with config push and teardown
+- **AOS-CX Virtual (vCX)** - Data center switches with full VXLAN/EVPN, BGP, OSPF, VRF, and NAC configurations
+- **Linux transport nodes** - Simulating dual-ISP WAN networks with DHCP (dnsmasq)
+- **Inter-lab BGP** - FRR-based eBGP mesh between transport nodes for cross-topology routing
+- **NAC integration** - 802.1X/MAC-auth with RADIUS on NAD devices (vCX or EC-V depending on topology)
+- **Test clients** - Per-segment Linux containers for validating end-to-end connectivity
+- **Deploy/destroy scripts** - Automated topology deployment with config push, DHCP renewal, and teardown
 
 Built on [vrnetlab](https://github.com/srl-labs/vrnetlab) for packaging VMs in containers and [ContainerLab](https://containerlab.dev/) for topology orchestration.
 
 ### Lab Topology
 
-![Lab Topology](topology.png)
+![Lab Topology](topology.svg)
 
-The lab consists of two independent 3-site topologies that can be deployed individually or together:
+The lab consists of three independent 3-site topologies that can be deployed individually or together:
 
-**Topology 1: CHI-STL-DFW** (Chicago, St. Louis, Dallas)
-- DFW-ECV-01 `lan0` ↔ DFW-vCX-01 `1/1/1`
-- STL-ECV-01 `lan0` ↔ STL-vCX-01 `1/1/1`
-- CHI-ECV-01 `lan0` ↔ CHI-vCX-01 `1/1/1`
-- All EC-V `wan0` → **internet** transport node
-- All EC-V `wan1` → **mpls** transport node
-- 9 test clients (3 per site: managed, unmanaged, guest)
+**Topology 1: CHI-STL-DFW** (Chicago, St. Louis, Dallas) - ECOS + AOS-CX
+- Each site pairs an EC-V with a vCX switch connected via `lan0`
+- vCX acts as the **NAD device** for NAC, communicating with RADIUS
+- EC-V `wan0` → ISP-A, EC-V `wan1` → ISP-B
+- Full OSPF/BGP/VXLAN/EVPN stack between EC-V and vCX
+- 9 test clients (3 per site: managed, unmanaged, guest) connected to vCX access ports
 
-**Topology 2: SEA-SFO-LAX** (Seattle, San Francisco, Los Angeles)
-- SEA-ECV-01 `lan0` ↔ SEA-vCX-01 `1/1/1`
-- SFO-ECV-01 `lan0` ↔ SFO-vCX-01 `1/1/1`
-- LAX-ECV-01 `lan0` ↔ LAX-vCX-01 `1/1/1`
-- All EC-V `wan0` → **internet** transport node
-- All EC-V `wan1` → **mpls** transport node
-- 9 test clients (3 per site: managed, unmanaged, guest)
+**Topology 2: SEA-SFO-LAX** (Seattle, San Francisco, Los Angeles) - ECOS + AOS-CX
+- Same architecture as CHI-STL-DFW
+- vCX acts as the **NAD device** for NAC
+- 9 test clients connected to vCX access ports
 
-Each topology uses its own transport nodes with unique management IPs to allow both to run simultaneously.
+**Topology 3: JFK-RDU-MIA** (New York, Raleigh, Miami) - ECOS Only
+- **No AOS-CX switches** - EC-V appliances serve clients directly
+- EC-V uses 7 NICs with 3 LAN interfaces (`lan0`, `lan1`, `lan2`) for direct client attachment
+- EC-V acts as the **NAD device** for NAC, communicating with RADIUS directly
+- EC-V provides DHCP to clients on each LAN segment
+- No OSPF, BGP, or VXLAN - simplified architecture for standalone SD-WAN testing
+
+Each topology uses its own transport nodes (ISP-A, ISP-B) with unique management IPs to allow all three to run simultaneously on a shared 172.30.30.0/24 management network.
+
+### Inter-Lab BGP
+
+When multiple topologies are deployed, FRR (Free Range Routing) can be installed on the transport nodes to establish eBGP peering across labs. This enables:
+- Cross-topology RFC1918 route exchange
+- SD-WAN tunnel formation between appliances in different topologies
+- End-to-end client connectivity across all 9 sites
+
+Each ISP node has a unique ASN. ISP-A nodes peer with each other (AS 65010, 65012, 65014) and ISP-B nodes peer with each other (AS 65011, 65013, 65015). Prefix filtering ensures only RFC1918 routes are advertised.
+
+Deploy inter-lab BGP with:
+```bash
+./bgp-interlab/deploy-all.sh
+```
 
 ### Network Design
 
+**Sites with AOS-CX (CHI-STL-DFW, SEA-SFO-LAX):**
+
 Each site follows the same architecture:
-
-- **EdgeConnect EC-V** handles SD-WAN overlay, connecting to two WAN transports (internet + MPLS) and one LAN interface to the local vCX switch
-- **AOS-CX vCX** provides LAN switching with three customer segments (VRFs) and VXLAN/EVPN for cross-site L2/L3 connectivity
+- **EdgeConnect EC-V** handles SD-WAN overlay, connecting to two WAN transports (ISP-A + ISP-B) and one LAN interface to the local vCX switch
+- **AOS-CX vCX** provides LAN switching with three customer segments (VRFs), VXLAN/EVPN for cross-site L2/L3 connectivity, and NAC (802.1X/MAC-auth)
 - **Test clients** attach to access ports on the vCX, one per customer segment
-
-**Routing and overlay stack:**
 
 | Layer | Technology | Details |
 |-------|-----------|---------|
 | Underlay | OSPF (area 0) | EC-V ↔ vCX LAN adjacency, loopback reachability |
-| Overlay control | BGP (eBGP multihop) | EC-V AS 64001 ↔ vCX AS 65001, L2VPN EVPN address-family |
+| Overlay control | BGP (eBGP multihop) | EC-V ↔ vCX with L2VPN EVPN address-family |
 | Overlay data | VXLAN | 6 VNIs per site (3 L2 bridge + 3 L3 routing per VRF) |
 | Segmentation | VRFs | CSN_Managed, CSN_Unmanaged, CSN_Guest |
 | VLANs | 1010, 1011, 1012 | Mapped to Managed, Unmanaged, Guest segments |
+| NAC | 802.1X/MAC-auth | RADIUS on vCX with QUARANTINE (VLAN 999) pre-auth role |
 | Client services | DHCP | Per-VRF DHCP servers on each vCX |
+
+**Sites without AOS-CX (JFK-RDU-MIA):**
+
+- **EdgeConnect EC-V** handles SD-WAN overlay and serves clients directly on `lan0`, `lan1`, `lan2`
+- EC-V provides per-segment DHCP pools
+- EC-V acts as the NAD device for NAC, communicating with the RADIUS server directly
+- No OSPF, BGP, VXLAN, or VRF configuration needed
 
 ### What Gets Configured Automatically
 
@@ -64,24 +90,27 @@ Each site follows the same architecture:
 - VXLAN tunnel with L2 and L3 VNIs
 - VLANs, SVI interfaces, and access ports
 - DHCP servers per VRF
+- NAC: RADIUS server, port-access roles (MANAGED, UNMANAGED, GUEST, QUARANTINE), MAC-auth on all client-facing ports
 
-**EdgeConnect EC-V** appliances boot with basic credentials and Orchestrator registration info. Orchestrator preconfigurations are provided in `preconfig/` for import into Orchestrator to complete provisioning (deployment mode, interfaces, OSPF, BGP, VXLAN, overlays, and segments).
+**EdgeConnect EC-V** appliances boot with basic credentials and Orchestrator registration info. Orchestrator preconfigurations are provided in `preconfig/` for import into Orchestrator to complete provisioning (deployment mode, interfaces, OSPF, BGP, VXLAN, overlays, segments, and DHCP for ECOS-only sites).
 
-**Transport nodes** (internet and MPLS) configure themselves with IP addressing, DHCP (dnsmasq), IP forwarding, and NAT rules.
+**Transport nodes** (ISP-A and ISP-B) configure themselves with IP addressing, DHCP (dnsmasq), IP forwarding, and NAT rules.
 
-**Test clients** obtain DHCP addresses from their respective vCX VRF and set a default route via the LAN.
+**Test clients** obtain DHCP addresses from their respective vCX VRF (CHI-STL-DFW, SEA-SFO-LAX) or EC-V DHCP pools (JFK-RDU-MIA) and set a default route via the LAN.
 
 ## Prerequisites
 
 ### System Requirements
 
-| Requirement | Minimum (single topology) | Full lab (both topologies) | Notes |
-|-------------|---------------------------|----------------------------|-------|
-| **OS** | Linux (Ubuntu 20.04+, Debian 11+, RHEL 8+) | Same | Native Linux required |
-| **CPU** | 8+ cores with virtualization extensions | 16+ cores | Intel VT-x or AMD-V required |
-| **RAM** | 40GB+ | 80GB+ | EC-V: 4GB x 3, AOS-CX: 8GB x 3 per topology |
-| **Disk** | 50GB free | 100GB free | For Docker images and VM disks |
-| **KVM** | Enabled and accessible | Same | Required for running VMs in containers |
+| Requirement | Single Topology | Two Topologies | All Three | Notes |
+|-------------|-----------------|----------------|-----------|-------|
+| **OS** | Linux (Ubuntu 20.04+, Debian 11+, RHEL 8+) | Same | Same | Native Linux required |
+| **CPU** | 8+ cores | 16+ cores | 24+ cores | Intel VT-x or AMD-V required |
+| **RAM** | 40GB+ | 80GB+ | 100GB+ | EC-V: 4GB, AOS-CX: 8GB each |
+| **Disk** | 50GB free | 100GB free | 150GB free | For Docker images and VM disks |
+| **KVM** | Enabled and accessible | Same | Same | Required for running VMs in containers |
+
+Note: JFK-RDU-MIA requires less RAM (~12GB for 3 EC-Vs) since it has no AOS-CX switches.
 
 ### Required Software
 
@@ -94,7 +123,7 @@ Each site follows the same architecture:
 ### Required Images (Note: Obtain these from HPE/Aruba)
 
 1. **EdgeConnect EC-V qcow2** - e.g., `ECV-9.6.1.0_106887.qcow2`
-2. **AOS-CX vmdk** - e.g., `arubaoscx-disk-image-genericx86-p4-20250822141147.vmdk`
+2. **AOS-CX vmdk** - e.g., `arubaoscx-disk-image-genericx86-p4-20250822141147.vmdk` (not needed for JFK-RDU-MIA only)
 
 ## Installation Guide
 
@@ -245,18 +274,26 @@ sudo apt install sshpass
 The deploy script handles topology deployment, waits for AOS-CX switches to boot, pushes startup configurations via SSH, and renews DHCP leases on test clients.
 
 ```bash
-# Source environment variables first
-source .env
-
 # Deploy a single topology
 ./scripts/deploy.sh chi-stl-dfw
 ./scripts/deploy.sh sea-sfo-lax
+./scripts/deploy.sh jfk-rdu-mia
 
-# Or deploy both topologies
+# Or deploy all topologies
 ./scripts/deploy.sh all
 ```
 
-### 5. Monitor Boot Progress
+Note: `.env` is sourced automatically by the deploy script.
+
+### 5. Enable Inter-Lab BGP (Optional)
+
+After deploying multiple topologies, enable cross-lab routing:
+
+```bash
+./bgp-interlab/deploy-all.sh
+```
+
+### 6. Monitor Boot Progress
 
 EC-V boots in ~60-90 seconds, AOS-CX takes ~2-3 minutes:
 
@@ -269,7 +306,7 @@ docker logs -f clab-chi-stl-dfw_ec-cx-DFW-ECV-01
 docker logs -f clab-chi-stl-dfw_ec-cx-DFW-vCX-01
 ```
 
-### 6. Access Your Devices
+### 7. Access Your Devices
 
 **CHI-STL-DFW Topology:**
 
@@ -281,8 +318,8 @@ docker logs -f clab-chi-stl-dfw_ec-cx-DFW-vCX-01
 | DFW-vCX-01 | AOS-CX | https://172.30.30.31 | ssh admin@172.30.30.31 |
 | STL-vCX-01 | AOS-CX | https://172.30.30.32 | ssh admin@172.30.30.32 |
 | CHI-vCX-01 | AOS-CX | https://172.30.30.33 | ssh admin@172.30.30.33 |
-| internet | Linux | N/A | docker exec -it clab-chi-stl-dfw_ec-cx-internet bash |
-| mpls | Linux | N/A | docker exec -it clab-chi-stl-dfw_ec-cx-mpls bash |
+| isp-a | Linux | N/A | docker exec -it clab-chi-stl-dfw_ec-cx-isp-a bash |
+| isp-b | Linux | N/A | docker exec -it clab-chi-stl-dfw_ec-cx-isp-b bash |
 
 **SEA-SFO-LAX Topology:**
 
@@ -294,19 +331,30 @@ docker logs -f clab-chi-stl-dfw_ec-cx-DFW-vCX-01
 | SEA-vCX-01 | AOS-CX | https://172.30.30.34 | ssh admin@172.30.30.34 |
 | SFO-vCX-01 | AOS-CX | https://172.30.30.35 | ssh admin@172.30.30.35 |
 | LAX-vCX-01 | AOS-CX | https://172.30.30.36 | ssh admin@172.30.30.36 |
-| internet | Linux | N/A | docker exec -it clab-sea-sfo-lax_ec-cx-internet bash |
-| mpls | Linux | N/A | docker exec -it clab-sea-sfo-lax_ec-cx-mpls bash |
+| isp-a | Linux | N/A | docker exec -it clab-sea-sfo-lax_ec-cx-isp-a bash |
+| isp-b | Linux | N/A | docker exec -it clab-sea-sfo-lax_ec-cx-isp-b bash |
+
+**JFK-RDU-MIA Topology:**
+
+| Node | Type | Web UI | SSH |
+|------|------|--------|-----|
+| JFK-ECV-01 | EC-V | https://172.30.30.27 | ssh admin@172.30.30.27 |
+| RDU-ECV-01 | EC-V | https://172.30.30.28 | ssh admin@172.30.30.28 |
+| MIA-ECV-01 | EC-V | https://172.30.30.29 | ssh admin@172.30.30.29 |
+| isp-a | Linux | N/A | docker exec -it clab-jfk-rdu-mia_ec-cx-isp-a bash |
+| isp-b | Linux | N/A | docker exec -it clab-jfk-rdu-mia_ec-cx-isp-b bash |
 
 Default credentials: `admin` / `admin`
 
-### 7. Tear Down
+### 8. Tear Down
 
 ```bash
 # Destroy a single topology
 ./scripts/destroy.sh chi-stl-dfw
 ./scripts/destroy.sh sea-sfo-lax
+./scripts/destroy.sh jfk-rdu-mia
 
-# Or destroy both
+# Or destroy all
 ./scripts/destroy.sh all
 ```
 
@@ -328,58 +376,102 @@ Each vCX switch has a startup config in `configs/` that is pushed via SSH during
 
 - **VRFs**: CSN_Managed, CSN_Unmanaged, CSN_Guest with per-VRF route-distinguishers and EVPN route-targets
 - **OSPF** (area 0): LAN-facing interface for underlay reachability to EC-V loopbacks
-- **BGP** (AS 65001): eBGP multihop peering to EC-V (AS 64001) with L2VPN EVPN address-family
+- **BGP**: eBGP multihop peering to EC-V with L2VPN EVPN address-family
 - **VXLAN**: L2 VNIs (1010, 1011, 1012) bridging VLANs across sites, L3 VNIs (10010, 10011, 10012) for inter-VRF routing
-- **VLANs and SVIs**: VLAN 1010 (Managed), 1011 (Unmanaged), 1012 (Guest) with /24 subnets
+- **VLANs and SVIs**: VLAN 1010 (Managed), 1011 (Unmanaged), 1012 (Guest), 999 (Quarantine) with /24 subnets
 - **Access ports**: 1/1/2 (Managed), 1/1/3 (Unmanaged), 1/1/4 (Guest) for test clients
 - **DHCP servers**: Per-VRF pools serving test clients
+- **NAC**: RADIUS server, port-access roles (MANAGED, UNMANAGED, GUEST, QUARANTINE), MAC-auth on all client-facing ports with pre-auth, reject, and critical roles set to QUARANTINE
 
-**Per-site IP addressing:**
+**Per-site IP addressing (CHI-STL-DFW / SEA-SFO-LAX):**
 
-| Site | Loopback | LAN (1/1/1) | Managed SVI | Unmanaged SVI | Guest SVI |
-|------|----------|-------------|-------------|---------------|-----------|
-| DFW | 198.18.1.1/32 | 10.1.0.1/31 | 192.168.10.1/24 | 192.168.11.1/24 | 192.168.12.1/24 |
-| STL | 198.18.2.1/32 | 10.2.0.1/31 | 192.168.20.1/24 | 192.168.21.1/24 | 192.168.22.1/24 |
-| CHI | 198.18.3.1/32 | 10.3.0.1/31 | 192.168.30.1/24 | 192.168.31.1/24 | 192.168.32.1/24 |
-| SEA | 198.18.4.1/32 | 10.4.0.1/31 | 192.168.40.1/24 | 192.168.41.1/24 | 192.168.42.1/24 |
-| SFO | 198.18.5.1/32 | 10.5.0.1/31 | 192.168.50.1/24 | 192.168.51.1/24 | 192.168.52.1/24 |
-| LAX | 198.18.6.1/32 | 10.6.0.1/31 | 192.168.60.1/24 | 192.168.61.1/24 | 192.168.62.1/24 |
+| Site | EC-V ASN | vCX ASN | Loopback | LAN (1/1/1) | Managed SVI | Unmanaged SVI | Guest SVI |
+|------|----------|---------|----------|-------------|-------------|---------------|-----------|
+| DFW | 64001 | 65001 | 198.18.1.1/32 | 10.1.0.1/30 | 192.168.10.1/24 | 192.168.11.1/24 | 192.168.12.1/24 |
+| STL | 64002 | 65002 | 198.18.2.1/32 | 10.2.0.1/30 | 192.168.20.1/24 | 192.168.21.1/24 | 192.168.22.1/24 |
+| CHI | 64003 | 65003 | 198.18.3.1/32 | 10.3.0.1/30 | 192.168.30.1/24 | 192.168.31.1/24 | 192.168.32.1/24 |
+| SEA | 64004 | 65004 | 198.18.4.1/32 | 10.4.0.1/30 | 192.168.40.1/24 | 192.168.41.1/24 | 192.168.42.1/24 |
+| SFO | 64005 | 65005 | 198.18.5.1/32 | 10.5.0.1/30 | 192.168.50.1/24 | 192.168.51.1/24 | 192.168.52.1/24 |
+| LAX | 64006 | 65006 | 198.18.6.1/32 | 10.6.0.1/30 | 192.168.60.1/24 | 192.168.61.1/24 | 192.168.62.1/24 |
+
+**Per-site IP addressing (JFK-RDU-MIA):**
+
+| Site | EC-V ASN | EC-V Loopback | lan0 (Managed) | lan1 (Unmanaged) | lan2 (Guest) |
+|------|----------|---------------|----------------|------------------|--------------|
+| JFK | 64007 | 198.19.0.7/32 | 192.168.70.1/24 | 192.168.71.1/24 | 192.168.72.1/24 |
+| RDU | 64008 | 198.19.0.8/32 | 192.168.80.1/24 | 192.168.81.1/24 | 192.168.82.1/24 |
+| MIA | 64009 | 198.19.0.9/32 | 192.168.90.1/24 | 192.168.91.1/24 | 192.168.92.1/24 |
 
 ### EdgeConnect Preconfigurations
 
-YAML preconfigurations for each EC-V are in `preconfig/`. These files are formatted for import into Orchestrator to provision the appliances and include:
+YAML preconfigurations for each EC-V are in `preconfig/`. These files are formatted for import into Orchestrator and include:
 
+**CHI-STL-DFW / SEA-SFO-LAX preconfigs** (full VXLAN/BGP/OSPF stack):
 - Appliance info (hostname, group, site, location)
 - Template groups (Default, VXLAN)
-- Business intent overlays (RealTime, CriticalApps, BulkApps, DefaultOverlay, CSN_LBO, CSN_SSE)
+- Business intent overlays (RealTime, CriticalApps, BulkApps, DefaultOverlay, SSE_BYPASS, SSE_INSPECT)
 - Deployment mode (inline-router) with interface definitions (lan0, wan0, wan1)
 - OSPF configuration per segment
-- BGP configuration (AS 64001) with EVPN peering to vCX (AS 65001)
-- Per-segment BGP route-targets for CSN_Managed, CSN_Unmanaged, CSN_Guest
+- BGP configuration with EVPN peering to vCX
+- Per-segment BGP route-targets
 - Segment local routes for internet breakout
 - VXLAN configuration (UDP 4789, VTEP source on lo0)
+
+**JFK-RDU-MIA preconfigs** (standalone EC-V):
+- Appliance info (hostname, group, site, location)
+- Template groups (Default, NAC)
+- Business intent overlays (same as above)
+- Deployment mode (inline-router) with 3 LAN interfaces (lan0, lan1, lan2) for direct client attachment
+- Per-segment DHCP server configuration
+- Segment local routes
+- No OSPF, BGP, or VXLAN sections
+
+**Standalone preconfigs** (`preconfig/standalone/`):
+- SASE-LAX-ECV-01, SASE-SFO-ECV-01, SASE-SEA-ECV-01
+- Different region (`sase-rsa` on Orchestrator), overlays (MANAGED_SWG, SDWAN, DEFAULT), and WAN labels (SASE_ISP_A, SASE_ISP_B)
+- DHCP with static IP reservations for specific VMs
 
 ### Transport Nodes
 
 Each topology has two Linux transport nodes simulating WAN circuits:
 
-- **internet**: Provides DHCP (dnsmasq) on 192.168.x.0/24 ranges, NAT via iptables, and IP forwarding
-- **mpls**: Provides DHCP (dnsmasq) on 10.100.x.0/24 ranges with IP forwarding
+- **ISP-A**: Provides DHCP (dnsmasq) on 192.168.x.0/24 ranges, NAT via iptables, and IP forwarding
+- **ISP-B**: Provides DHCP (dnsmasq) on 10.100.x.0/24 ranges with IP forwarding
 
 DNSMasq configurations are in `configs/` with separate files per topology to avoid IP conflicts.
 
+**Transport node management IPs:**
+
+| Topology | ISP-A | ISP-B |
+|----------|-------|-------|
+| CHI-STL-DFW | 172.30.30.10 | 172.30.30.11 |
+| SEA-SFO-LAX | 172.30.30.12 | 172.30.30.13 |
+| JFK-RDU-MIA | 172.30.30.14 | 172.30.30.15 |
+
 ### Interface Mapping
 
-**EdgeConnect EC-V:**
+**EdgeConnect EC-V (CHI-STL-DFW, SEA-SFO-LAX) - 6 NICs:**
 
 | Container Interface | VM Interface | Purpose |
 |---------------------|--------------|---------|
 | eth0 | mgmt0 | Management (DHCP) |
-| eth1 | wan0 | Primary WAN (internet) |
-| eth2 | lan0 | Primary LAN (to vCX 1/1/1) |
-| eth3 | wan1 | Secondary WAN (MPLS) |
-| eth4 | lan1 | Secondary LAN (unused) |
-| eth5 | ha | High availability (unused) |
+| eth1 | wan0 | ISP-A WAN |
+| eth2 | lan0 | LAN (to vCX 1/1/1) |
+| eth3 | wan1 | ISP-B WAN |
+| eth4 | lan1 | Unused |
+| eth5 | ha | HA (unused) |
+
+**EdgeConnect EC-V (JFK-RDU-MIA) - 7 NICs:**
+
+| Container Interface | VM Interface | Purpose |
+|---------------------|--------------|---------|
+| eth0 | mgmt0 | Management (DHCP) |
+| eth1 | wan0 | ISP-A WAN |
+| eth2 | lan0 | Managed clients |
+| eth3 | wan1 | ISP-B WAN |
+| eth4 | lan1 | Unmanaged clients |
+| eth5 | ha | HA (unused) |
+| eth6 | lan2 | Guest clients |
 
 **AOS-CX:**
 
@@ -390,6 +482,39 @@ DNSMasq configurations are in `configs/` with separate files per topology to avo
 | eth2 | 1/1/2 | Managed client access (VLAN 1010) |
 | eth3 | 1/1/3 | Unmanaged client access (VLAN 1011) |
 | eth4 | 1/1/4 | Guest client access (VLAN 1012) |
+
+## Utility Scripts
+
+### MAC Inventory
+
+Collect test client MAC addresses for NAC import:
+
+```bash
+./scripts/mac-inventory.sh chi-stl-dfw
+./scripts/mac-inventory.sh all
+```
+
+Outputs CSV format with fields: `mac,labels,vlan,notes,name,radius_group`
+
+### Traffic Generator
+
+Generate background ping traffic for SD-WAN flow visualization in Orchestrator:
+
+```bash
+./scripts/traffic-gen.sh start chi-stl-dfw
+./scripts/traffic-gen.sh start jfk-rdu-mia
+./scripts/traffic-gen.sh status chi-stl-dfw
+./scripts/traffic-gen.sh stop all
+```
+
+### DHCP Renewal
+
+Force DHCP lease renewal on test clients:
+
+```bash
+./scripts/renew-dhcp.sh chi-stl-dfw
+./scripts/renew-dhcp.sh all
+```
 
 ## Troubleshooting
 
@@ -503,7 +628,7 @@ iostat -x 1 3
 dmesg | grep -i "oom\|killed process" | tail -10
 ```
 
-Each EC-V requires ~4GB RAM and each AOS-CX requires ~8GB RAM. A single 3-site topology needs approximately 40GB+ total. Running both topologies simultaneously requires 80GB+. If the host is under pressure, consider deploying only one topology at a time.
+Each EC-V requires ~4GB RAM and each AOS-CX requires ~8GB RAM. A single 3-site topology (with vCX) needs approximately 40GB+ total. JFK-RDU-MIA (ECOS only) needs ~12GB. Running all three topologies simultaneously requires 100GB+. If the host is under pressure, consider deploying only one topology at a time.
 
 ### Not Sure if EC-Vs Have Actually Booted
 
@@ -546,7 +671,7 @@ sshpass -p admin ssh -o StrictHostKeyChecking=no admin@172.30.30.31
 
 ### Test Clients Not Getting DHCP Leases
 
-If test clients fail to obtain DHCP leases (e.g., after a topology deploy or when the DHCP server was not ready at boot time), the boot exec's `udhcpc` process may still be running and blocking new requests. Use the helper script to kill existing processes and request fresh leases:
+If test clients fail to obtain DHCP leases (e.g., after a topology deploy or when the DHCP server was not ready at boot time), use the helper script to kill existing processes and request fresh leases:
 
 ```bash
 # Renew DHCP for a specific topology
@@ -576,18 +701,30 @@ clab-ecos-aoscx/
 ├── README.md
 ├── env.example                              # Environment variable template
 ├── .gitignore
-├── topology.png                             # Network diagram
+├── topology.svg                             # Network diagram
+├── bgp-interlab/                            # Inter-lab BGP (FRR)
+│   ├── deploy-all.sh                        # Deploy FRR configs to all transport nodes
+│   ├── setup-bgp.sh                         # Install FRR and apply config per node
+│   ├── daemons                              # FRR daemon configuration
+│   ├── lab1-isp-a/frr.conf                  # FRR configs per transport node
+│   ├── lab1-isp-b/frr.conf
+│   ├── lab2-isp-a/frr.conf
+│   ├── lab2-isp-b/frr.conf
+│   ├── lab3-isp-a/frr.conf
+│   └── lab3-isp-b/frr.conf
 ├── configs/                                 # Device startup configurations
 │   ├── CHI-vCX-01.cfg                       # AOS-CX switch configs (6 total)
 │   ├── DFW-vCX-01.cfg
-│   ├── LAX-vCX-01.cfg
+│   ├── STL-vCX-01.cfg
 │   ├── SEA-vCX-01.cfg
 │   ├── SFO-vCX-01.cfg
-│   ├── STL-vCX-01.cfg
-│   ├── chi-stl-dfw-internet-dnsmasq.conf    # DNSMasq DHCP configs (4 total)
-│   ├── chi-stl-dfw-mpls-dnsmasq.conf
-│   ├── sea-sfo-lax-internet-dnsmasq.conf
-│   └── sea-sfo-lax-mpls-dnsmasq.conf
+│   ├── LAX-vCX-01.cfg
+│   ├── chi-stl-dfw-isp-a-dnsmasq.conf      # DNSMasq DHCP configs (6 total)
+│   ├── chi-stl-dfw-isp-b-dnsmasq.conf
+│   ├── sea-sfo-lax-isp-a-dnsmasq.conf
+│   ├── sea-sfo-lax-isp-b-dnsmasq.conf
+│   ├── jfk-rdu-mia-isp-a-dnsmasq.conf
+│   └── jfk-rdu-mia-isp-b-dnsmasq.conf
 ├── ecos/                                    # EdgeConnect custom vrnetlab node type
 │   ├── Makefile
 │   └── docker/
@@ -595,17 +732,28 @@ clab-ecos-aoscx/
 │       └── launch.py
 ├── examples/                                # ContainerLab topology definitions
 │   ├── CHI-STL-DFW_topology.clab.yml
-│   └── SEA-SFO-LAX_topology.clab.yml
+│   ├── SEA-SFO-LAX_topology.clab.yml
+│   └── JFK-RDU-MIA_topology.clab.yml
 ├── preconfig/                               # EC-V Orchestrator preconfigurations
-│   ├── CHI-ECV-01.yml
+│   ├── CHI-ECV-01.yml                       # VXLAN/BGP/OSPF sites (6 total)
 │   ├── DFW-ECV-01.yml
-│   ├── LAX-ECV-01.yml
+│   ├── STL-ECV-01.yml
 │   ├── SEA-ECV-01.yml
 │   ├── SFO-ECV-01.yml
-│   └── STL-ECV-01.yml
+│   ├── LAX-ECV-01.yml
+│   ├── JFK-ECV-01.yml                       # ECOS-only sites (3 total)
+│   ├── RDU-ECV-01.yml
+│   ├── MIA-ECV-01.yml
+│   └── standalone/                          # SASE standalone preconfigs
+│       ├── SASE-LAX-ECV-01.yml
+│       ├── SASE-SFO-ECV-01.yml
+│       └── SASE-SEA-ECV-01.yml
 └── scripts/                                 # Deployment automation
     ├── deploy.sh                            # Deploy topology + push configs
-    └── destroy.sh                           # Tear down topology
+    ├── destroy.sh                           # Tear down topology
+    ├── renew-dhcp.sh                        # Force DHCP lease renewal on clients
+    ├── mac-inventory.sh                     # Collect client MACs for NAC import
+    └── traffic-gen.sh                       # Generate background traffic for flows
 ```
 
 ## Security Considerations

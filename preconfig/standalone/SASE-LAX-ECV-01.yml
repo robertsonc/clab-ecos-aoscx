@@ -1,22 +1,22 @@
 # appliance info
 applianceInfo:
   softwareVersion:
-  hostname: RSA-SEA-ECV-01
-  site: SEA
+  hostname: SASE-LAX-ECV-01
+  site: LAX
   clusterProfile:
   networkRole: non-hub
   region: sase-rsa
   location:
-    address: 17801 International Blvd
+    address: 1 World Way
     address2:
-    city: Seattle
-    state: Washington
-    zipCode: 98158
+    city: Los Angeles
+    state: California
+    zipCode: 90045
     country: US
     latitude:
     longitude:
   contact:
-    name: "RSA SASE / UZTNA Demo - SEA"
+    name: "SASE / UZTNA Demo - LAX"
     email:
     phoneNumber:
 # end of appliance info
@@ -46,11 +46,20 @@ deploymentInfo:
     outboundMaxBandwidth: 10000000
 
   deploymentInterfaces:
+    - interfaceName: lan0
+      interfaceLabel: Data
+      interfaceType: lan
+      interfaceComment: "DC Workloads"
+      ipAddressMask: 10.175.0.1/24
+      nextHop:
+      segment: Default
+      zone: Workloads
+      role: LAN0_DEFAULT
     - interfaceName: lan1
       interfaceLabel: Data
       interfaceType: lan
       interfaceComment: "Corpoprate Clients"
-      ipAddressMask: 10.173.1.1/24
+      ipAddressMask: 10.175.1.1/24
       nextHop:
       segment: Default
       zone: Corporate
@@ -59,7 +68,7 @@ deploymentInfo:
       interfaceLabel: Data
       interfaceType: lan
       interfaceComment: "Guest clients"
-      ipAddressMask: 10.173.2.1/24
+      ipAddressMask: 10.175.2.1/24
       nextHop:
       segment: Default
       zone: Guest
@@ -92,12 +101,25 @@ deploymentInfo:
       role: default
 
   dhcpInfo:
+    - dhcpInterfaceName: lan0
+      dhcpType: server
+      dhcpAddressMask: 10.175.0.0/24
+      startIpAddress: 10.175.0.26
+      endIpAddress: 10.175.0.99
+      gatewayIpAddress: 10.175.0.1
+      dnsServers:
+        - 8.8.8.8
+        - 1.1.1.1
+      defaultLease: 86400
+      options:
+        - option: 1
+          value: 255.255.255.255
     - dhcpInterfaceName: lan1
       dhcpType: server
-      dhcpAddressMask: 10.173.1.0/24
-      startIpAddress: 10.173.1.26
-      endIpAddress: 10.173.1.99
-      gatewayIpAddress: 10.173.1.1
+      dhcpAddressMask: 10.175.1.0/24
+      startIpAddress: 10.175.1.26
+      endIpAddress: 10.175.1.99
+      gatewayIpAddress: 10.175.1.1
       dnsServers:
         - 8.8.8.8
         - 1.1.1.1
@@ -106,18 +128,18 @@ deploymentInfo:
         - option: 1
           value: 255.255.255.255
       staticIpAssignments:
-        - hostname: RSA-SASE-SEA-WIN-VM-01
-          macAddress: 00:50:56:ae:f0:c3
-          ipAddress: 10.173.1.100
-        - hostname: RSA-SASE-SEA-WIN-VM-02
-          macAddress: 00:50:56:ae:10:d1
-          ipAddress: 10.173.1.101
+        - hostname: SASE-LAX-WIN-VM-01
+          macAddress: 00:50:56:ae:6e:22
+          ipAddress: 10.175.1.100
+        - hostname: SASE-LAX-WIN-VM-02
+          macAddress: 00:50:56:ae:d4:c1
+          ipAddress: 10.175.1.101
     - dhcpInterfaceName: lan2
       dhcpType: server
-      dhcpAddressMask: 10.173.2.0/24
-      startIpAddress: 10.173.2.26
-      endIpAddress: 10.173.2.99
-      gatewayIpAddress: 10.173.2.1
+      dhcpAddressMask: 10.175.2.0/24
+      startIpAddress: 10.175.2.26
+      endIpAddress: 10.175.2.99
+      gatewayIpAddress: 10.175.2.1
       dnsServers:
         - 8.8.8.8
         - 1.1.1.1
@@ -126,9 +148,9 @@ deploymentInfo:
         - option: 1
           value: 255.255.255.255
       staticIpAssignments:
-        - hostname: RSA-SASE-SEA-WIN-VM-03
-          macAddress: 00:50:56:ae:db:2c
-          ipAddress: 10.173.2.100
+        - hostname: SASE-LAX-WIN-VM-03
+          macAddress: 00:50:56:ae:dc:d3
+          ipAddress: 10.175.2.100
 # end of deployment info
 
 # loopback configuration
@@ -136,7 +158,7 @@ loopbackInterface:
   loopbacks:
     - interfaceId: lo0
       adminStatus: Up
-      ipAddressMask: 198.18.173.1/32
+      ipAddressMask: 198.18.175.1/32
       interfaceLabel:
       zone: Default
       role: default
