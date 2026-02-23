@@ -1,0 +1,166 @@
+# appliance info
+applianceInfo:
+  softwareVersion:
+  hostname: RSA-LAX-ECV-01
+  site: LAX
+  clusterProfile:
+  networkRole: non-hub
+  region: sase-rsa
+  location:
+    address: 1 World Way
+    address2:
+    city: Los Angeles
+    state: California
+    zipCode: 90045
+    country: US
+    latitude:
+    longitude:
+  contact:
+    name: "RSA SASE / UZTNA Demo - LAX"
+    email:
+    phoneNumber:
+# end of appliance info
+
+# template groups
+templateGroups:
+  groups:
+    - Default Template Group
+    - SASE-Route-Maps
+    - NAC
+# end of template groups
+
+# overlays
+businessIntentOverlays:
+    overlays:
+      - MANAGED_SWG
+      - SDWAN
+      - DEFAULT
+# end of overlays
+
+# deployment info
+deploymentInfo:
+  deploymentMode: inline-router
+  totalOutboundBandwidth: 600000
+  totalInboundBandwidth: 600000
+  passThroughShapedTraffic:
+    outboundMaxBandwidth: 10000000
+
+  deploymentInterfaces:
+    - interfaceName: lan0
+      interfaceLabel: Data
+      interfaceType: lan
+      interfaceComment: "DC Workloads"
+      ipAddressMask: 10.175.0.1/24
+      nextHop:
+      segment: Default
+      zone: Workloads
+      role: LAN0_DEFAULT
+    - interfaceName: lan1
+      interfaceLabel: Data
+      interfaceType: lan
+      interfaceComment: "Corpoprate Clients"
+      ipAddressMask: 10.175.1.1/24
+      nextHop:
+      segment: Default
+      zone: Corporate
+      role: LAN1_DEFAULT
+    - interfaceName: lan2
+      interfaceLabel: Data
+      interfaceType: lan
+      interfaceComment: "Guest clients"
+      ipAddressMask: 10.175.2.1/24
+      nextHop:
+      segment: Default
+      zone: Guest
+      role: LAN2_DEFAULT
+    - interfaceName: wan0
+      interfaceLabel: SASE_ISP_A
+      interfaceType: wan
+      interfaceComment: isp-a
+      ipAddressMask:
+      nextHop:
+      inboundMaxBandwidth: 200000
+      outboundMaxBandwidth: 200000
+      firewallMode: statefulSNAT
+      behindNat: none
+      segment: Default
+      zone: Default
+      role: default
+    - interfaceName: wan1
+      interfaceLabel: SASE_ISP_B
+      interfaceType: wan
+      interfaceComment: isp-b
+      ipAddressMask:
+      nextHop:
+      inboundMaxBandwidth: 200000
+      outboundMaxBandwidth: 200000
+      firewallMode: statefulSNAT
+      behindNat: none
+      segment: Default
+      zone: Default
+      role: default
+
+  dhcpInfo:
+    - dhcpInterfaceName: lan0
+      dhcpType: server
+      dhcpAddressMask: 10.175.0.0/24
+      startIpAddress: 10.175.0.26
+      endIpAddress: 10.175.0.99
+      gatewayIpAddress: 10.175.0.1
+      dnsServers:
+        - 8.8.8.8
+        - 1.1.1.1
+      defaultLease: 86400
+      options:
+        - option: 1
+          value: 255.255.255.255
+    - dhcpInterfaceName: lan1
+      dhcpType: server
+      dhcpAddressMask: 10.175.1.0/24
+      startIpAddress: 10.175.1.26
+      endIpAddress: 10.175.1.99
+      gatewayIpAddress: 10.175.1.1
+      dnsServers:
+        - 8.8.8.8
+        - 1.1.1.1
+      defaultLease: 86400
+      options:
+        - option: 1
+          value: 255.255.255.255
+      staticIpAssignments:
+        - hostname: RSA-SASE-LAX-WIN-VM-01
+          macAddress: 00:50:56:ae:6e:22
+          ipAddress: 10.175.1.100
+        - hostname: RSA-SASE-LAX-WIN-VM-02
+          macAddress: 00:50:56:ae:d4:c1
+          ipAddress: 10.175.1.100
+    - dhcpInterfaceName: lan2
+      dhcpType: server
+      dhcpAddressMask: 10.175.2.0/24
+      startIpAddress: 10.175.2.26
+      endIpAddress: 10.175.2.99
+      gatewayIpAddress: 10.175.2.1
+      dnsServers:
+        - 8.8.8.8
+        - 1.1.1.1
+      defaultLease: 86400
+      options:
+        - option: 1
+          value: 255.255.255.255
+      staticIpAssignments:
+        - hostname: RSA-SASE-LAX-WIN-VM-03
+          macAddress: 00:50:56:ae:dc:d3
+          ipAddress: 10.175.2.100
+# end of deployment info
+
+# loopback configuration
+loopbackInterface:
+  loopbacks:
+    - interfaceId: lo0
+      adminStatus: Up
+      ipAddressMask: 198.18.175.1/32
+      interfaceLabel:
+      zone: Default
+      role: default
+      segment: Default
+# end of loopback configuration

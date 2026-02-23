@@ -1,0 +1,144 @@
+# appliance info
+applianceInfo:
+  softwareVersion:
+  hostname: RSA-SEA-ECV-01
+  site: SEA
+  clusterProfile:
+  networkRole: non-hub
+  region: sase-rsa
+  location:
+    address: 17801 International Blvd
+    address2:
+    city: Seattle
+    state: Washington
+    zipCode: 98158
+    country: US
+    latitude:
+    longitude:
+  contact:
+    name: "RSA SASE / UZTNA Demo - SEA"
+    email:
+    phoneNumber:
+# end of appliance info
+
+# template groups
+templateGroups:
+  groups:
+    - Default Template Group
+    - SASE-Route-Maps
+    - NAC
+# end of template groups
+
+# overlays
+businessIntentOverlays:
+    overlays:
+      - MANAGED_SWG
+      - SDWAN
+      - DEFAULT
+# end of overlays
+
+# deployment info
+deploymentInfo:
+  deploymentMode: inline-router
+  totalOutboundBandwidth: 600000
+  totalInboundBandwidth: 600000
+  passThroughShapedTraffic:
+    outboundMaxBandwidth: 10000000
+
+  deploymentInterfaces:
+    - interfaceName: lan1
+      interfaceLabel: Data
+      interfaceType: lan
+      interfaceComment: "Corpoprate Clients"
+      ipAddressMask: 10.173.1.1/24
+      nextHop:
+      segment: Default
+      zone: Corporate
+      role: LAN1_DEFAULT
+    - interfaceName: lan2
+      interfaceLabel: Data
+      interfaceType: lan
+      interfaceComment: "Guest clients"
+      ipAddressMask: 10.173.2.1/24
+      nextHop:
+      segment: Default
+      zone: Guest
+      role: LAN2_DEFAULT
+    - interfaceName: wan0
+      interfaceLabel: SASE_ISP_A
+      interfaceType: wan
+      interfaceComment: isp-a
+      ipAddressMask:
+      nextHop:
+      inboundMaxBandwidth: 200000
+      outboundMaxBandwidth: 200000
+      firewallMode: statefulSNAT
+      behindNat: none
+      segment: Default
+      zone: Default
+      role: default
+    - interfaceName: wan1
+      interfaceLabel: SASE_ISP_B
+      interfaceType: wan
+      interfaceComment: isp-b
+      ipAddressMask:
+      nextHop:
+      inboundMaxBandwidth: 200000
+      outboundMaxBandwidth: 200000
+      firewallMode: statefulSNAT
+      behindNat: none
+      segment: Default
+      zone: Default
+      role: default
+
+  dhcpInfo:
+    - dhcpInterfaceName: lan1
+      dhcpType: server
+      dhcpAddressMask: 10.173.1.0/24
+      startIpAddress: 10.173.1.26
+      endIpAddress: 10.173.1.99
+      gatewayIpAddress: 10.173.1.1
+      dnsServers:
+        - 8.8.8.8
+        - 1.1.1.1
+      defaultLease: 86400
+      options:
+        - option: 1
+          value: 255.255.255.255
+      staticIpAssignments:
+        - hostname: RSA-SASE-SEA-WIN-VM-01
+          macAddress: 00:50:56:ae:f0:c3
+          ipAddress: 10.173.1.100
+        - hostname: RSA-SASE-SEA-WIN-VM-02
+          macAddress: 00:50:56:ae:10:d1
+          ipAddress: 10.173.1.101
+    - dhcpInterfaceName: lan2
+      dhcpType: server
+      dhcpAddressMask: 10.173.2.0/24
+      startIpAddress: 10.173.2.26
+      endIpAddress: 10.173.2.99
+      gatewayIpAddress: 10.173.2.1
+      dnsServers:
+        - 8.8.8.8
+        - 1.1.1.1
+      defaultLease: 86400
+      options:
+        - option: 1
+          value: 255.255.255.255
+      staticIpAssignments:
+        - hostname: RSA-SASE-SEA-WIN-VM-03
+          macAddress: 00:50:56:ae:db:2c
+          ipAddress: 10.173.2.100
+# end of deployment info
+
+# loopback configuration
+loopbackInterface:
+  loopbacks:
+    - interfaceId: lo0
+      adminStatus: Up
+      ipAddressMask: 198.18.173.1/32
+      interfaceLabel:
+      zone: Default
+      role: default
+      segment: Default
+# end of loopback configuration
