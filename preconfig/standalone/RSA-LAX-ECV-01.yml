@@ -133,7 +133,7 @@ deploymentInfo:
           ipAddress: 10.175.1.100
         - hostname: RSA-SASE-LAX-WIN-VM-02
           macAddress: 00:50:56:ae:d4:c1
-          ipAddress: 10.175.1.100
+          ipAddress: 10.175.1.101
     - dhcpInterfaceName: lan2
       dhcpType: server
       dhcpAddressMask: 10.175.2.0/24
