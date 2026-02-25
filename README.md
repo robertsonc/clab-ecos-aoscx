@@ -516,6 +516,150 @@ Force DHCP lease renewal on test clients:
 ./scripts/renew-dhcp.sh all
 ```
 
+## WAN Impairment Testing
+
+Use `tc` (traffic control) with `netem` on ISP transport nodes to inject latency, loss, and jitter for testing SD-WAN overlay behavior, brownout thresholds, and path selection.
+
+### How It Works
+
+Traffic shaping is applied on the ISP node's outbound interface using:
+1. **iptables** marks matching packets with a firewall mark
+2. **tc prio qdisc** classifies traffic into priority bands
+3. **tc netem** applies impairments (delay, loss, jitter) to marked traffic
+4. **tc filter** routes marked packets to the impaired class
+
+This ensures only traffic matching the specified subnets is impaired — all other traffic passes through unaffected.
+
+### Example: Add 40ms Latency to a Single Site
+
+Apply 40ms latency to SEA site traffic egressing ISP-A (`192.168.204.0/24`) and ISP-B (`192.168.205.0/24`):
+
+**ISP-A:**
+```bash
+sudo iptables -t mangle -A POSTROUTING -s 192.168.204.0/24 -o ens192 -j MARK --set-mark 10
+sudo tc qdisc del dev ens192 root 2>/dev/null
+sudo tc qdisc add dev ens192 root handle 1: prio
+sudo tc qdisc add dev ens192 parent 1:3 handle 30: netem delay 40ms
+sudo tc filter add dev ens192 protocol ip parent 1:0 prio 1 handle 10 fw flowid 1:3
+```
+
+**ISP-B:**
+```bash
+sudo iptables -t mangle -A POSTROUTING -s 192.168.205.0/24 -o ens192 -j MARK --set-mark 10
+sudo tc qdisc del dev ens192 root 2>/dev/null
+sudo tc qdisc add dev ens192 root handle 1: prio
+sudo tc qdisc add dev ens192 parent 1:3 handle 30: netem delay 40ms
+sudo tc filter add dev ens192 protocol ip parent 1:0 prio 1 handle 10 fw flowid 1:3
+```
+
+### Example: Asymmetric Latency Across ISPs
+
+Apply different latency per ISP to simulate real-world asymmetric paths — 80ms on ISP-A, 20ms on ISP-B for the SEA site:
+
+**ISP-A (high latency):**
+```bash
+sudo iptables -t mangle -A POSTROUTING -s 192.168.204.0/24 -o ens192 -j MARK --set-mark 10
+sudo tc qdisc del dev ens192 root 2>/dev/null
+sudo tc qdisc add dev ens192 root handle 1: prio
+sudo tc qdisc add dev ens192 parent 1:3 handle 30: netem delay 80ms
+sudo tc filter add dev ens192 protocol ip parent 1:0 prio 1 handle 10 fw flowid 1:3
+```
+
+**ISP-B (low latency):**
+```bash
+sudo iptables -t mangle -A POSTROUTING -s 192.168.205.0/24 -o ens192 -j MARK --set-mark 10
+sudo tc qdisc del dev ens192 root 2>/dev/null
+sudo tc qdisc add dev ens192 root handle 1: prio
+sudo tc qdisc add dev ens192 parent 1:3 handle 30: netem delay 20ms
+sudo tc filter add dev ens192 protocol ip parent 1:0 prio 1 handle 10 fw flowid 1:3
+```
+
+This tests SD-WAN path selection — the overlay should prefer ISP-B for latency-sensitive traffic.
+
+### Example: Packet Loss Injection
+
+Inject 5% packet loss on ISP-A for the SEA site to trigger brownout detection:
+
+```bash
+sudo iptables -t mangle -A POSTROUTING -s 192.168.204.0/24 -o ens192 -j MARK --set-mark 10
+sudo tc qdisc del dev ens192 root 2>/dev/null
+sudo tc qdisc add dev ens192 root handle 1: prio
+sudo tc qdisc add dev ens192 parent 1:3 handle 30: netem loss 5%
+sudo tc filter add dev ens192 protocol ip parent 1:0 prio 1 handle 10 fw flowid 1:3
+```
+
+### Example: Jitter Injection
+
+Add 10ms base delay with 5ms jitter (random variation) on ISP-B for the LAX site:
+
+```bash
+sudo iptables -t mangle -A POSTROUTING -s 192.168.212.0/24 -o ens192 -j MARK --set-mark 10
+sudo tc qdisc del dev ens192 root 2>/dev/null
+sudo tc qdisc add dev ens192 root handle 1: prio
+sudo tc qdisc add dev ens192 parent 1:3 handle 30: netem delay 10ms 5ms
+sudo tc filter add dev ens192 protocol ip parent 1:0 prio 1 handle 10 fw flowid 1:3
+```
+
+### Example: Combined Impairments (Latency + Loss + Jitter)
+
+Simulate a degraded WAN link with 60ms latency, 15ms jitter, and 2% loss on ISP-A for the SEA site:
+
+```bash
+sudo iptables -t mangle -A POSTROUTING -s 192.168.204.0/24 -o ens192 -j MARK --set-mark 10
+sudo tc qdisc del dev ens192 root 2>/dev/null
+sudo tc qdisc add dev ens192 root handle 1: prio
+sudo tc qdisc add dev ens192 parent 1:3 handle 30: netem delay 60ms 15ms loss 2%
+sudo tc filter add dev ens192 protocol ip parent 1:0 prio 1 handle 10 fw flowid 1:3
+```
+
+### Example: Site-to-Site Impairment
+
+Impair traffic between two specific sites — add 50ms latency only between SEA (`192.168.204.0/24`) and LAX (`192.168.212.0/24`) on ISP-A:
+
+```bash
+# SEA → LAX direction
+sudo iptables -t mangle -A POSTROUTING -s 192.168.204.0/24 -d 192.168.212.0/24 -o ens192 -j MARK --set-mark 20
+# LAX → SEA direction
+sudo iptables -t mangle -A POSTROUTING -s 192.168.212.0/24 -d 192.168.204.0/24 -o ens192 -j MARK --set-mark 20
+
+sudo tc qdisc del dev ens192 root 2>/dev/null
+sudo tc qdisc add dev ens192 root handle 1: prio
+sudo tc qdisc add dev ens192 parent 1:3 handle 30: netem delay 50ms
+sudo tc filter add dev ens192 protocol ip parent 1:0 prio 1 handle 20 fw flowid 1:3
+```
+
+### Example: Site-to-Site Loss and Jitter
+
+Simulate an unstable path between SEA and LAX with 3% loss and 20ms jitter on ISP-B:
+
+```bash
+sudo iptables -t mangle -A POSTROUTING -s 192.168.205.0/24 -d 192.168.213.0/24 -o ens192 -j MARK --set-mark 20
+sudo iptables -t mangle -A POSTROUTING -s 192.168.213.0/24 -d 192.168.205.0/24 -o ens192 -j MARK --set-mark 20
+
+sudo tc qdisc del dev ens192 root 2>/dev/null
+sudo tc qdisc add dev ens192 root handle 1: prio
+sudo tc qdisc add dev ens192 parent 1:3 handle 30: netem delay 5ms 20ms loss 3%
+sudo tc filter add dev ens192 protocol ip parent 1:0 prio 1 handle 10 fw flowid 1:3
+```
+
+### Removing Impairments
+
+Clear all tc rules and iptables marks to restore normal traffic flow:
+
+```bash
+sudo tc qdisc del dev ens192 root 2>/dev/null
+sudo iptables -t mangle -F POSTROUTING
+```
+
+### Notes
+
+- Replace `ens192` with the appropriate interface for your environment (e.g., `eth1`, `eth2`, `eth3` for containerlab ISP nodes)
+- The `netem delay Xms Yms` syntax means X base delay with Y random jitter (uniform distribution)
+- For correlation-based jitter use `netem delay 50ms 10ms 25%` — 25% correlation with previous delay value
+- Loss can use different models: `loss 5%` (random), `loss 5% 25%` (correlated), `loss gemodel 1% 10% 70% 0.1%` (Gilbert-Elliott)
+- EdgeConnect brownout thresholds are configured per-overlay in Orchestrator — adjust impairment values to test around your configured thresholds
+- Apply impairments on the ISP node, not on the EC-V itself, to simulate realistic WAN degradation
+
 ## Troubleshooting
 
 ### Build Issues
