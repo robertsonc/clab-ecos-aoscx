@@ -36,8 +36,6 @@ businessIntentOverlays:
       - CriticalApps
       - BulkApps
       - DefaultOverlay
-      - SSE_BYPASS
-      - SSE_INSPECT
 # end of overlays
 
 # deployment info
