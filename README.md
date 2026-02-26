@@ -660,6 +660,29 @@ sudo iptables -t mangle -F POSTROUTING
 - EdgeConnect brownout thresholds are configured per-overlay in Orchestrator — adjust impairment values to test around your configured thresholds
 - Apply impairments on the ISP node, not on the EC-V itself, to simulate realistic WAN degradation
 
+### Verifying Active Impairments
+
+Check what rules are currently in place:
+
+**iptables marks (with packet/byte counters):**
+```bash
+iptables -t mangle -L POSTROUTING -n -v
+```
+
+**tc qdiscs (netem rules per interface):**
+```bash
+tc qdisc show dev eth1
+tc qdisc show dev eth3
+```
+
+**tc filters (mark → class mapping):**
+```bash
+tc filter show dev eth1
+tc filter show dev eth3
+```
+
+Run the iptables command twice with a few seconds gap — if the packet counters are incrementing, traffic is actively being matched and impaired.
+
 ## Troubleshooting
 
 ### Build Issues
