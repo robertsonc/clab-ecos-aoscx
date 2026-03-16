@@ -1,0 +1,158 @@
+# ECOS Lab Topology (EC-V only, no vCX switches)
+#
+# This topology creates a 3-site SD-WAN lab with:
+# - 3 EdgeConnect EC-V appliances (PHL, IAH, DEN)
+# - 2 Linux nodes acting as ISP-A and ISP-B transport
+# - 3 test VMs (1 per site, connected to EC-V lan0)
+#
+# Site Layout:
+#   PHL (401 N Broad St, Philadelphia, PA)    - PHL-ECV-01
+#   IAH (1301 Fannin St, Houston, TX)         - IAH-ECV-01
+#   DEN (1515 Arapahoe St, Denver, CO)        - DEN-ECV-01
+
+name: phl-iah-den_ec
+
+mgmt:
+  network: clab-mgmt
+  ipv4-subnet: 172.30.30.0/24
+
+topology:
+  kinds:
+    linux:
+      image: ghcr.io/srl-labs/network-multitool
+
+  nodes:
+    #
+    # === Transport Networks ===
+    #
+    isp-a:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool
+      mgmt-ipv4: 172.30.30.18
+      binds:
+        - ../configs/phl-iah-den-isp-a-dnsmasq.conf:/etc/dnsmasq.conf:ro
+      exec:
+        - sysctl -w net.ipv4.ip_forward=1
+        - ip addr add 192.168.130.1/24 dev eth1
+        - ip addr add 192.168.131.1/24 dev eth2
+        - ip addr add 192.168.132.1/24 dev eth3
+        - iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+        - iptables -A FORWARD -i eth0 -o eth1 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth0 -o eth2 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth0 -o eth3 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth2 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth3 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth1 -j ACCEPT
+        - iptables -A FORWARD -i eth2 -j ACCEPT
+        - iptables -A FORWARD -i eth3 -j ACCEPT
+        - apk add --no-cache dnsmasq
+        - dnsmasq
+
+    isp-b:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool
+      mgmt-ipv4: 172.30.30.19
+      binds:
+        - ../configs/phl-iah-den-isp-b-dnsmasq.conf:/etc/dnsmasq.conf:ro
+      exec:
+        - sysctl -w net.ipv4.ip_forward=1
+        - ip addr add 192.168.230.1/24 dev eth1
+        - ip addr add 192.168.231.1/24 dev eth2
+        - ip addr add 192.168.232.1/24 dev eth3
+        - iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+        - iptables -A FORWARD -i eth0 -o eth1 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth0 -o eth2 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth0 -o eth3 -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth2 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth3 -o eth0 -j ACCEPT
+        - iptables -A FORWARD -i eth1 -j ACCEPT
+        - iptables -A FORWARD -i eth2 -j ACCEPT
+        - iptables -A FORWARD -i eth3 -j ACCEPT
+        - apk add --no-cache dnsmasq
+        - dnsmasq
+    #
+    # === Philadelphia Site (PHL) ===
+    #
+    PHL-ECV-01:
+      kind: generic_vm
+      image: vrnetlab/aruba_ecos:9.6.1.0_106887
+      mgmt-ipv4: 172.30.30.43
+      env:
+        ECOS_ADMIN_PASSWORD: ${ECOS_ADMIN_PASSWORD:-}
+        ECOS_REGISTRATION_KEY: ${ECOS_REGISTRATION_KEY:-}
+        ECOS_ACCOUNT_NAME: ${ECOS_ACCOUNT_NAME:-}
+        ECOS_SITE_TAG: Philadelphia_PA
+        ECOS_PORTAL_HOSTNAME: ${ECOS_PORTAL_HOSTNAME:-}
+
+    #
+    # === Houston Site (IAH) ===
+    #
+    IAH-ECV-01:
+      kind: generic_vm
+      image: vrnetlab/aruba_ecos:9.6.1.0_106887
+      mgmt-ipv4: 172.30.30.44
+      env:
+        ECOS_ADMIN_PASSWORD: ${ECOS_ADMIN_PASSWORD:-}
+        ECOS_REGISTRATION_KEY: ${ECOS_REGISTRATION_KEY:-}
+        ECOS_ACCOUNT_NAME: ${ECOS_ACCOUNT_NAME:-}
+        ECOS_SITE_TAG: Houston_TX
+        ECOS_PORTAL_HOSTNAME: ${ECOS_PORTAL_HOSTNAME:-}
+
+    #
+    # === Denver Site (DEN) ===
+    #
+    DEN-ECV-01:
+      kind: generic_vm
+      image: vrnetlab/aruba_ecos:9.6.1.0_106887
+      mgmt-ipv4: 172.30.30.45
+      env:
+        ECOS_ADMIN_PASSWORD: ${ECOS_ADMIN_PASSWORD:-}
+        ECOS_REGISTRATION_KEY: ${ECOS_REGISTRATION_KEY:-}
+        ECOS_ACCOUNT_NAME: ${ECOS_ACCOUNT_NAME:-}
+        ECOS_SITE_TAG: Denver_CO
+        ECOS_PORTAL_HOSTNAME: ${ECOS_PORTAL_HOSTNAME:-}
+
+    #
+    # === Test VMs ===
+    #
+    PHL-test-vm:
+      kind: linux
+      image: ubuntu:24.04
+      exec:
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
+
+    IAH-test-vm:
+      kind: linux
+      image: ubuntu:24.04
+      exec:
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
+
+    DEN-test-vm:
+      kind: linux
+      image: ubuntu:24.04
+      exec:
+        - sh -c "(apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq isc-dhcp-client iputils-ping psmisc procps; dhclient eth1; ip route del default dev eth0; gw=$(ip -4 -o addr show eth1 | grep -o 'inet [0-9.]*' | cut -d' ' -f2 | sed 's/\.[0-9]*$/.1/'); [ -z $gw ] || ip route replace default via $gw dev eth1; ping -i 5 8.8.8.8) > /dev/null 2>&1 &"
+
+  links:
+    #
+    # === WAN0 Links (EC-V wan0 <-> isp-a) ===
+    #
+    - endpoints: ["PHL-ECV-01:eth1", "isp-a:eth1"]
+    - endpoints: ["IAH-ECV-01:eth1", "isp-a:eth2"]
+    - endpoints: ["DEN-ECV-01:eth1", "isp-a:eth3"]
+
+    #
+    # === WAN1 Links (EC-V wan1 <-> isp-b) ===
+    #
+    - endpoints: ["PHL-ECV-01:eth3", "isp-b:eth1"]
+    - endpoints: ["IAH-ECV-01:eth3", "isp-b:eth2"]
+    - endpoints: ["DEN-ECV-01:eth3", "isp-b:eth3"]
+
+    #
+    # === Test VM Links (test-vm:eth1 <-> EC-V lan0) ===
+    #
+    - endpoints: ["PHL-test-vm:eth1", "PHL-ECV-01:eth2"]
+    - endpoints: ["IAH-test-vm:eth1", "IAH-ECV-01:eth2"]
+    - endpoints: ["DEN-test-vm:eth1", "DEN-ECV-01:eth2"]

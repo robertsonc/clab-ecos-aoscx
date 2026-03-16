@@ -10,6 +10,7 @@ declare -A TOPO_FILES=(
     [sea-sfo-lax]="examples/SEA-SFO-LAX_topology.clab.yml"
     [jfk-rdu-mia]="examples/JFK-RDU-MIA_topology.clab.yml"
     [chi-atl-phx]="examples/CHI-ATL-PHX_topology.clab.yml"
+    [phl-iah-den]="examples/PHL-IAH-DEN_topology.clab.yml"
 )
 
 # Each topology's switches: "name:ip:config ..."
@@ -18,6 +19,7 @@ declare -A TOPO_SWITCHES=(
     [sea-sfo-lax]="SEA-vCX-01:172.30.30.34:configs/SEA-vCX-01.cfg SFO-vCX-01:172.30.30.35:configs/SFO-vCX-01.cfg LAX-vCX-01:172.30.30.36:configs/LAX-vCX-01.cfg"
     [jfk-rdu-mia]=""
     [chi-atl-phx]=""
+    [phl-iah-den]=""
 )
 
 # Clab container prefix per topology
@@ -26,6 +28,7 @@ declare -A TOPO_CLAB_PREFIX=(
     [sea-sfo-lax]="clab-sea-sfo-lax_ec-cx"
     [jfk-rdu-mia]="clab-jfk-rdu-mia_ec"
     [chi-atl-phx]="clab-chi-atl-phx_ec"
+    [phl-iah-den]="clab-phl-iah-den_ec"
 )
 
 # Each topology's test clients (container node names)
@@ -34,6 +37,7 @@ declare -A TOPO_CLIENTS=(
     [sea-sfo-lax]="SEA-client-managed SEA-client-unmanaged SEA-client-guest SFO-client-managed SFO-client-unmanaged SFO-client-guest LAX-client-managed LAX-client-unmanaged LAX-client-guest"
     [jfk-rdu-mia]="JFK-client-managed JFK-client-unmanaged JFK-client-guest RDU-client-managed RDU-client-unmanaged RDU-client-guest MIA-client-managed MIA-client-unmanaged MIA-client-guest"
     [chi-atl-phx]="CHI-test-vm ATL-test-vm PHX-test-vm"
+    [phl-iah-den]="PHL-test-vm IAH-test-vm DEN-test-vm"
 )
 
 # Management IPs per topology (transport, EC-V, vCX)
@@ -42,6 +46,7 @@ declare -A TOPO_MGMT_IPS=(
     [sea-sfo-lax]="172.30.30.12 172.30.30.13 172.30.30.24 172.30.30.25 172.30.30.26 172.30.30.34 172.30.30.35 172.30.30.36"
     [jfk-rdu-mia]="172.30.30.14 172.30.30.15 172.30.30.27 172.30.30.28 172.30.30.29"
     [chi-atl-phx]="172.30.30.16 172.30.30.17 172.30.30.40 172.30.30.41 172.30.30.42"
+    [phl-iah-den]="172.30.30.18 172.30.30.19 172.30.30.43 172.30.30.44 172.30.30.45"
 )
 
 SSH_OPTS="-T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10"
@@ -50,7 +55,7 @@ SSH_POLL=10      # poll interval in seconds
 
 # ── Helpers ─────────────────────────────────────────────────────────
 usage() {
-    echo "Usage: $0 <chi-stl-dfw|sea-sfo-lax|jfk-rdu-mia|chi-atl-phx|all>"
+    echo "Usage: $0 <chi-stl-dfw|sea-sfo-lax|jfk-rdu-mia|chi-atl-phx|phl-iah-den|all>"
     exit 1
 }
 
@@ -194,7 +199,7 @@ fi
 
 ARG="${1,,}"  # lowercase
 
-if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-lax" && "$ARG" != "jfk-rdu-mia" && "$ARG" != "chi-atl-phx" && "$ARG" != "all" ]]; then
+if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-lax" && "$ARG" != "jfk-rdu-mia" && "$ARG" != "chi-atl-phx" && "$ARG" != "phl-iah-den" && "$ARG" != "all" ]]; then
     usage
 fi
 
@@ -206,7 +211,7 @@ fi
 
 # Build list of topologies to deploy
 if [ "$ARG" = "all" ]; then
-    TOPOS=("chi-stl-dfw" "sea-sfo-lax" "jfk-rdu-mia" "chi-atl-phx")
+    TOPOS=("chi-stl-dfw" "sea-sfo-lax" "jfk-rdu-mia" "chi-atl-phx" "phl-iah-den")
 else
     TOPOS=("$ARG")
 fi

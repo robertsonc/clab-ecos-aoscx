@@ -10,6 +10,7 @@ declare -A TOPO_FILES=(
     [sea-sfo-lax]="examples/SEA-SFO-LAX_topology.clab.yml"
     [jfk-rdu-mia]="examples/JFK-RDU-MIA_topology.clab.yml"
     [chi-atl-phx]="examples/CHI-ATL-PHX_topology.clab.yml"
+    [phl-iah-den]="examples/PHL-IAH-DEN_topology.clab.yml"
 )
 
 # Management IPs per topology (transport, EC-V, vCX)
@@ -18,11 +19,12 @@ declare -A TOPO_MGMT_IPS=(
     [sea-sfo-lax]="172.30.30.12 172.30.30.13 172.30.30.24 172.30.30.25 172.30.30.26 172.30.30.34 172.30.30.35 172.30.30.36"
     [jfk-rdu-mia]="172.30.30.14 172.30.30.15 172.30.30.27 172.30.30.28 172.30.30.29"
     [chi-atl-phx]="172.30.30.16 172.30.30.17 172.30.30.40 172.30.30.41 172.30.30.42"
+    [phl-iah-den]="172.30.30.18 172.30.30.19 172.30.30.43 172.30.30.44 172.30.30.45"
 )
 
 # ── Helpers ─────────────────────────────────────────────────────────
 usage() {
-    echo "Usage: $0 <chi-stl-dfw|sea-sfo-lax|jfk-rdu-mia|chi-atl-phx|all>"
+    echo "Usage: $0 <chi-stl-dfw|sea-sfo-lax|jfk-rdu-mia|chi-atl-phx|phl-iah-den|all>"
     exit 1
 }
 
@@ -63,12 +65,12 @@ fi
 
 ARG="${1,,}"  # lowercase
 
-if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-lax" && "$ARG" != "jfk-rdu-mia" && "$ARG" != "chi-atl-phx" && "$ARG" != "all" ]]; then
+if [[ "$ARG" != "chi-stl-dfw" && "$ARG" != "sea-sfo-lax" && "$ARG" != "jfk-rdu-mia" && "$ARG" != "chi-atl-phx" && "$ARG" != "phl-iah-den" && "$ARG" != "all" ]]; then
     usage
 fi
 
 if [ "$ARG" = "all" ]; then
-    TOPOS=("chi-stl-dfw" "sea-sfo-lax" "jfk-rdu-mia" "chi-atl-phx")
+    TOPOS=("chi-stl-dfw" "sea-sfo-lax" "jfk-rdu-mia" "chi-atl-phx" "phl-iah-den")
 else
     TOPOS=("$ARG")
 fi
